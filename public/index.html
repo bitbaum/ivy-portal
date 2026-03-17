@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ivy Portal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <h1><span class="ivy-icon">&#127807;</span> Ivy Portal</h1>
+      <a href="https://g-latitudee7470.tailf6c86e.ts.net:18790" class="tailscale-link" title="Remote access via Tailscale">ts://remote</a>
+    </div>
+    <div class="header-right">
+      <span id="last-refresh" class="meta-text"></span>
+      <button id="refresh-btn" class="btn-refresh" title="Refresh all">&#8635;</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <section class="card" id="system-card">
+        <h2>System</h2>
+        <div id="system-content"><div class="skeleton-block"></div><div class="skeleton-block short"></div><div class="skeleton-block"></div></div>
+      </section>
+
+      <section class="card" id="crons-card">
+        <h2>Cron Jobs</h2>
+        <div id="crons-content"><div class="skeleton-block"></div><div class="skeleton-block short"></div><div class="skeleton-block"></div></div>
+      </section>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main">
+      <section class="card" id="today-card">
+        <h2>Today</h2>
+        <div class="card-grid">
+          <div>
+            <h3>Calendar</h3>
+            <div id="calendar-content"><div class="skeleton-block"></div><div class="skeleton-block short"></div></div>
+          </div>
+          <div>
+            <h3>Commitments</h3>
+            <div id="commitments-content"><div class="skeleton-block"></div><div class="skeleton-block short"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="finance-card">
+        <h2>Finance</h2>
+        <div id="finance-content"><div class="skeleton-block"></div><div class="skeleton-block"></div><div class="skeleton-block short"></div></div>
+      </section>
+
+      <section class="card" id="memory-card">
+        <h2>Memory</h2>
+        <div id="memory-content"><div class="skeleton-block"></div><div class="skeleton-block short"></div></div>
+      </section>
+
+      <section class="card" id="projects-card">
+        <h2>Projects</h2>
+        <div id="projects-content"><div class="skeleton-block"></div><div class="skeleton-block short"></div></div>
+      </section>
+
+      <section class="card" id="email-card">
+        <h2>Email</h2>
+        <div id="email-content"><div class="skeleton-block"></div><div class="skeleton-block short"></div></div>
+      </section>
+    </main>
+  </div>
+
+  <footer id="portal-footer">
+    <span id="footer-version">OpenClaw</span>
+    <span id="footer-uptime"></span>
+    <span id="footer-refresh"></span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
