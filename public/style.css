@@ -594,3 +594,13 @@ tr:hover .action-link,
   .layout { padding: 6px; }
   .card { padding: 10px; }
 }
+
+.email-link {
+  color: var(--text);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.email-link:hover {
+  color: #60a5fa;
+  text-decoration: underline;
+}

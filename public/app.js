@@ -241,10 +241,12 @@ async function loadCalendar() {
       const hasTime = ev._startStr.includes('T');
       const time = hasTime ? formatTime(ev._startStr) : 'All day';
       const location = ev.location || ev.Location || '';
+      const gcalLink = ev.htmlLink || `https://calendar.google.com/calendar/u/0/r/day/${day.replace(/-/g, '/')}`;
+      const locationLink = location ? `https://maps.google.com/?q=${encodeURIComponent(location)}` : '';
       html += `<div class="cal-event">
         <span class="cal-time">${time}</span>
-        <span class="cal-title">${escHtml(title)}</span>
-        ${location ? `<span style="font-size:0.75rem;color:var(--text-dim);margin-left:8px">${escHtml(location)}</span>` : ''}
+        <a href="${gcalLink}" target="_blank" class="cal-title email-link">${escHtml(title)}</a>
+        ${location ? `<a href="${locationLink}" target="_blank" class="action-link" style="font-size:0.75rem;margin-left:8px">📍 ${escHtml(location)}</a>` : ''}
       </div>`;
     }
   }
@@ -531,7 +533,7 @@ async function loadProjects() {
       conclusion === 'in_progress' || conclusion === 'queued' ? 'blue' :
       conclusion === 'cancelled' ? 'gray' : 'yellow';
     html += `<tr>
-      <td><strong>${escHtml(p.repo)}</strong></td>
+      <td><strong><a href="https://github.com/g-but/${escHtml(p.repo)}" target="_blank" class="email-link">${escHtml(p.repo)}</a></strong></td>
       <td>${badge(conclusion, color)}</td>
       <td>${escHtml(run.name || '\u2014')}</td>
       <td style="font-family:var(--mono);font-size:0.8rem">${escHtml(run.headBranch || '\u2014')}</td>
@@ -568,8 +570,9 @@ async function loadEmail() {
   }
 
   // Normalize email objects — gog output varies
-  const emails = (Array.isArray(data.emails) ? data.emails : []).map(normalizeEmail);
-  renderEmails(emails);
+  const rawEmails = Array.isArray(data.emails) ? data.emails : [];
+  const emails = rawEmails.map(normalizeEmail);
+  renderEmails(emails, rawEmails);
 }
 
 function normalizeEmail(e) {
@@ -633,19 +636,23 @@ function parseEmailRawText(raw) {
   return emails.slice(0, 15);
 }
 
-function renderEmails(emails) {
-  let html = `<div style="margin-bottom:8px;font-size:0.85rem;color:var(--text-dim)">${emails.length} unread</div>`;
+function renderEmails(emails, rawEmails) {
+  let html = `<div style="margin-bottom:8px;font-size:0.85rem;color:var(--text-dim)">${emails.length} unread ${actionLink('https://mail.google.com', 'Open Gmail')}</div>`;
 
-  for (const e of emails.slice(0, 15)) {
+  for (let i = 0; i < Math.min(emails.length, 15); i++) {
+    const e = emails[i];
+    const raw = rawEmails[i] || {};
+    const threadId = raw.id || raw.threadId || '';
+    const gmailUrl = threadId ? `https://mail.google.com/mail/u/0/#inbox/${threadId}` : 'https://mail.google.com';
     html += `<div class="email-item">
       ${e.from ? `<div class="email-from">${escHtml(e.from)}</div>` : ''}
-      <div class="email-subject">${escHtml(e.subject)}</div>
+      <div class="email-subject"><a href="${gmailUrl}" target="_blank" class="email-link">${escHtml(e.subject)}</a></div>
       ${e.date ? `<div class="email-date">${escHtml(e.date)}</div>` : ''}
     </div>`;
   }
 
   if (emails.length > 15) {
-    html += `<div style="padding-top:8px;font-size:0.8rem;color:var(--text-dim)">+ ${emails.length - 15} more</div>`;
+    html += `<div style="padding-top:8px;font-size:0.8rem;color:var(--text-dim)">+ ${emails.length - 15} more ${actionLink('https://mail.google.com', 'Open Gmail')}</div>`;
   }
 
   el('email-content').innerHTML = html;

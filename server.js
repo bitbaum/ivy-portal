@@ -8,6 +8,15 @@ const app = express();
 const PORT = 18790;
 const HOME = os.homedir();
 
+// Load env vars from OpenClaw .env (for GOG_KEYRING_PASSWORD etc.)
+const envFile = path.join(HOME, '.openclaw', '.env');
+if (existsSync(envFile)) {
+  for (const line of readFileSync(envFile, 'utf-8').split('\n')) {
+    const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.+)$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
+  }
+}
+
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -26,7 +35,8 @@ function runCmd(cmd, args = [], opts = {}) {
 function runShell(command, opts = {}) {
   return new Promise((resolve) => {
     const timeout = opts.timeout || 15000;
-    exec(command, { timeout, shell: '/bin/bash' }, (err, stdout, stderr) => {
+    const PATH = `${HOME}/.nvm/versions/node/v22.22.0/bin:/home/linuxbrew/.linuxbrew/bin:${HOME}/.local/bin:${HOME}/go/bin:/usr/local/bin:/usr/bin:/bin`;
+    exec(command, { timeout, shell: '/bin/bash', env: { ...process.env, PATH, HOME } }, (err, stdout, stderr) => {
       if (err) resolve({ ok: false, error: err.message, stderr });
       else resolve({ ok: true, data: stdout.trim() });
     });
@@ -100,14 +110,16 @@ app.get('/api/calendar', async (_req, res) => {
   const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
 
   const result = await runShell(
-    `gog calendar list primary --from ${today} --to ${nextWeek} --json`,
+    `gog calendar list primary --from ${today} --to ${nextWeek} --json -a butaeff@gmail.com`,
     { timeout: 20000 }
   );
 
   if (!result.ok) return res.json({ events: [], error: result.error });
 
   try {
-    const events = JSON.parse(result.data);
+    const parsed = JSON.parse(result.data);
+    // gog returns { events: [...] } wrapper
+    const events = Array.isArray(parsed) ? parsed : (parsed.events || []);
     res.json({ events });
   } catch {
     res.json({ events: [], raw: result.data });
@@ -160,15 +172,17 @@ app.get('/api/projects', async (_req, res) => {
 
 app.get('/api/email', async (_req, res) => {
   const result = await runShell(
-    'gog mail search "is:unread" --max 20 --json',
+    'gog mail search "is:unread" --max 20 --json -a butaeff@gmail.com',
     { timeout: 20000 }
   );
 
   if (!result.ok) return res.json({ emails: [], error: result.error });
 
   try {
-    const emails = JSON.parse(result.data);
-    res.json({ emails });
+    const parsed = JSON.parse(result.data);
+    // gog returns { threads: [...] } wrapper
+    const emails = Array.isArray(parsed) ? parsed : (parsed.threads || parsed.messages || []);
+    res.json({ emails, unreadCount: emails.length });
   } catch {
     res.json({ emails: [], raw: result.data });
   }
