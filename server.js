@@ -3,12 +3,15 @@ const { execFile, exec } = require('child_process');
 const { readFileSync, existsSync, readdirSync } = require('fs');
 const path = require('path');
 const os = require('os');
+const Database = require('better-sqlite3');
 
 const app = express();
 const PORT = 18790;
 const HOME = os.homedir();
+const DB_PATH = path.join(HOME, '.openclaw', 'knowledge.sqlite');
+const WORKSPACE = path.join(HOME, '.openclaw', 'workspace');
 
-// Load env vars from OpenClaw .env (for GOG_KEYRING_PASSWORD etc.)
+// Load env vars from OpenClaw .env
 const envFile = path.join(HOME, '.openclaw', '.env');
 if (existsSync(envFile)) {
   for (const line of readFileSync(envFile, 'utf-8').split('\n')) {
@@ -17,19 +20,16 @@ if (existsSync(envFile)) {
   }
 }
 
-// Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Helpers ---
 
-function runCmd(cmd, args = [], opts = {}) {
-  return new Promise((resolve) => {
-    const timeout = opts.timeout || 15000;
-    execFile(cmd, args, { timeout, env: { ...process.env, ...opts.env } }, (err, stdout, stderr) => {
-      if (err) resolve({ ok: false, error: err.message, stderr });
-      else resolve({ ok: true, data: stdout.trim() });
-    });
-  });
+function getDb() {
+  try {
+    return new Database(DB_PATH, { readonly: true });
+  } catch {
+    return null;
+  }
 }
 
 function runShell(command, opts = {}) {
@@ -43,16 +43,6 @@ function runShell(command, opts = {}) {
   });
 }
 
-function readJsonFile(filePath) {
-  try {
-    const resolved = filePath.replace(/^~/, HOME);
-    if (!existsSync(resolved)) return { ok: false, error: 'File not found' };
-    return { ok: true, data: JSON.parse(readFileSync(resolved, 'utf-8')) };
-  } catch (e) {
-    return { ok: false, error: e.message };
-  }
-}
-
 // --- API: System Health ---
 
 app.get('/api/system', async (_req, res) => {
@@ -64,7 +54,6 @@ app.get('/api/system', async (_req, res) => {
     runShell('systemctl --user is-active whatsapp-monitor.timer'),
   ]);
 
-  // Parse memory
   let memory = null;
   if (memResult.ok) {
     const lines = memResult.data.split('\n');
@@ -75,27 +64,16 @@ app.get('/api/system', async (_req, res) => {
     }
   }
 
-  // Parse disk
   let disk = null;
   if (diskResult.ok) {
-    const lines = diskResult.data.split('\n');
-    const diskLine = lines[1];
-    if (diskLine) {
-      const parts = diskLine.split(/\s+/);
-      disk = { size: parts[1], used: parts[2], available: parts[3], usePercent: parts[4] };
-    }
-  }
-
-  // Parse uptime
-  let uptime = null;
-  if (uptimeResult.ok) {
-    uptime = uptimeResult.data;
+    const parts = diskResult.data.split('\n')[1]?.split(/\s+/);
+    if (parts) disk = { size: parts[1], used: parts[2], available: parts[3], usePercent: parts[4] };
   }
 
   res.json({
     memory,
     disk,
-    uptime,
+    uptime: uptimeResult.ok ? uptimeResult.data : null,
     services: {
       gateway: gatewayResult.ok ? gatewayResult.data : 'unknown',
       whatsapp: whatsappResult.ok ? whatsappResult.data : 'unknown',
@@ -118,7 +96,6 @@ app.get('/api/calendar', async (_req, res) => {
 
   try {
     const parsed = JSON.parse(result.data);
-    // gog returns { events: [...] } wrapper
     const events = Array.isArray(parsed) ? parsed : (parsed.events || []);
     res.json({ events });
   } catch {
@@ -126,28 +103,36 @@ app.get('/api/calendar', async (_req, res) => {
   }
 });
 
-// --- API: Finance ---
+// --- API: Finance (from knowledge.sqlite) ---
 
 app.get('/api/finance', async (_req, res) => {
-  const subsFile = readJsonFile('~/.openclaw/workspace/data/subscription-registry.json');
+  const db = getDb();
+  let subscriptions = [];
+  if (db) {
+    try {
+      subscriptions = db.prepare(
+        "SELECT name, vendor, amount, currency, frequency, status, next_due, notes FROM subscriptions ORDER BY status, amount DESC"
+      ).all();
+    } catch { /* table may not exist */ }
+    db.close();
+  }
 
   const [upcomingResult, overdueResult] = await Promise.all([
-    runShell('python3 ~/.openclaw/workspace/tools/recurring-payments.py --upcoming 14', { timeout: 10000 }),
-    runShell('python3 ~/.openclaw/workspace/tools/recurring-payments.py --overdue', { timeout: 10000 }),
+    runShell(`python3 ${WORKSPACE}/tools/recurring-payments.py --upcoming 14 --json`, { timeout: 20000 }),
+    runShell(`python3 ${WORKSPACE}/tools/recurring-payments.py --overdue --json`, { timeout: 20000 }),
   ]);
 
-  res.json({
-    subscriptions: subsFile.ok ? subsFile.data.subscriptions || [] : [],
-    closed: subsFile.ok ? subsFile.data.closed || [] : [],
-    upcoming: upcomingResult.ok ? upcomingResult.data : null,
-    overdue: overdueResult.ok ? overdueResult.data : null,
-  });
+  let upcoming = null, overdue = null;
+  try { if (upcomingResult.ok) upcoming = JSON.parse(upcomingResult.data); } catch {}
+  try { if (overdueResult.ok) overdue = JSON.parse(overdueResult.data); } catch {}
+
+  res.json({ subscriptions, upcoming, overdue });
 });
 
 // --- API: Projects (CI) ---
 
 app.get('/api/projects', async (_req, res) => {
-  const repos = ['orangecat', 'botsmann', 'revampit', 'aoz-housing', 'revamp-info', 'swiss-longevity-hub'];
+  const repos = ['orangecat', 'botsmann', 'revampit', 'datacat', 'revamp-info', 'swiss-longevity-hub'];
 
   const results = await Promise.all(
     repos.map(async (repo) => {
@@ -156,12 +141,8 @@ app.get('/api/projects', async (_req, res) => {
         { timeout: 15000 }
       );
       if (!result.ok) return { repo, error: result.error };
-      try {
-        const runs = JSON.parse(result.data);
-        return { repo, runs };
-      } catch {
-        return { repo, error: 'Parse error', raw: result.data };
-      }
+      try { return { repo, runs: JSON.parse(result.data) }; }
+      catch { return { repo, error: 'Parse error' }; }
     })
   );
 
@@ -180,7 +161,6 @@ app.get('/api/email', async (_req, res) => {
 
   try {
     const parsed = JSON.parse(result.data);
-    // gog returns { threads: [...] } wrapper
     const emails = Array.isArray(parsed) ? parsed : (parsed.threads || parsed.messages || []);
     res.json({ emails, unreadCount: emails.length });
   } catch {
@@ -191,49 +171,100 @@ app.get('/api/email', async (_req, res) => {
 // --- API: Cron Jobs ---
 
 app.get('/api/crons', async (_req, res) => {
-  const result = readJsonFile('~/.openclaw/cron/jobs.json');
-  if (!result.ok) return res.json({ jobs: [], error: result.error });
-
-  const jobs = (result.data.jobs || []).map(j => ({
-    name: j.name,
-    enabled: j.enabled,
-    schedule: j.schedule?.expr,
-    tz: j.schedule?.tz,
-    lastStatus: j.state?.lastRunStatus,
-    lastDelivered: j.state?.lastDelivered,
-    lastRunAt: j.state?.lastRunAtMs ? new Date(j.state.lastRunAtMs).toISOString() : null,
-    nextRunAt: j.state?.nextRunAtMs ? new Date(j.state.nextRunAtMs).toISOString() : null,
-    lastDurationMs: j.state?.lastDurationMs,
-    consecutiveErrors: j.state?.consecutiveErrors || 0,
-  }));
-
-  res.json({ jobs });
+  const cronFile = path.join(HOME, '.openclaw', 'cron', 'jobs.json');
+  try {
+    if (!existsSync(cronFile)) return res.json({ jobs: [], error: 'No cron file' });
+    const data = JSON.parse(readFileSync(cronFile, 'utf-8'));
+    const jobs = (data.jobs || []).map(j => ({
+      name: j.name,
+      enabled: j.enabled,
+      schedule: j.schedule?.expr,
+      tz: j.schedule?.tz,
+      lastStatus: j.state?.lastRunStatus,
+      lastDelivered: j.state?.lastDelivered,
+      lastRunAt: j.state?.lastRunAtMs ? new Date(j.state.lastRunAtMs).toISOString() : null,
+      nextRunAt: j.state?.nextRunAtMs ? new Date(j.state.nextRunAtMs).toISOString() : null,
+      lastDurationMs: j.state?.lastDurationMs,
+      consecutiveErrors: j.state?.consecutiveErrors || 0,
+    }));
+    res.json({ jobs });
+  } catch (e) {
+    res.json({ jobs: [], error: e.message });
+  }
 });
 
-// --- API: Commitments ---
+// --- API: Commitments (from knowledge.sqlite) ---
 
 app.get('/api/commitments', async (_req, res) => {
-  const result = readJsonFile('~/.openclaw/workspace/data/commitments.json');
-  if (!result.ok) return res.json({ commitments: [], error: result.error });
+  const db = getDb();
+  if (!db) return res.json({ commitments: [] });
 
-  const commitments = Array.isArray(result.data) ? result.data : [];
-  res.json({ commitments });
+  try {
+    const commitments = db.prepare(
+      "SELECT id, description, due_date, status, financial_impact, source, created_at FROM commitments ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'waiting' THEN 1 WHEN 'blocked' THEN 2 ELSE 3 END, due_date"
+    ).all();
+    db.close();
+    res.json({ commitments });
+  } catch (e) {
+    db.close();
+    res.json({ commitments: [], error: e.message });
+  }
+});
+
+// --- API: Knowledge Graph (entities + relations) ---
+
+app.get('/api/knowledge', async (_req, res) => {
+  const db = getDb();
+  if (!db) return res.json({ entities: [], relations: [] });
+
+  try {
+    const entities = db.prepare(
+      "SELECT e.id, e.name, e.type, e.updated_at, COUNT(a.id) as attribute_count FROM entities e LEFT JOIN attributes a ON e.id = a.entity_id GROUP BY e.id ORDER BY e.updated_at DESC"
+    ).all();
+    const relations = db.prepare(
+      "SELECT e1.name as from_name, r.relation, e2.name as to_name FROM relations r JOIN entities e1 ON r.from_entity_id = e1.id JOIN entities e2 ON r.to_entity_id = e2.id"
+    ).all();
+    db.close();
+    res.json({ entities, relations });
+  } catch (e) {
+    db.close();
+    res.json({ entities: [], relations: [], error: e.message });
+  }
+});
+
+// --- API: Style Profile ---
+
+app.get('/api/style', async (_req, res) => {
+  const db = getDb();
+  if (!db) return res.json({ profile: null });
+
+  try {
+    const row = db.prepare("SELECT * FROM style_profile WHERE id=1").get();
+    db.close();
+    if (row && row.data) {
+      row.data = JSON.parse(row.data);
+    }
+    res.json({ profile: row || null });
+  } catch (e) {
+    db.close();
+    res.json({ profile: null, error: e.message });
+  }
 });
 
 // --- API: Memory (recent daily logs) ---
 
 app.get('/api/memory', async (_req, res) => {
-  const memDir = path.join(HOME, '.openclaw/workspace/memory');
+  const memDir = path.join(WORKSPACE, 'memory');
   try {
     const files = readdirSync(memDir)
       .filter(f => /^\d{4}-\d{2}-\d{2}\.md$/.test(f))
       .sort()
       .reverse()
-      .slice(0, 3);
+      .slice(0, 5);
 
     const logs = files.map(f => ({
       date: f.replace('.md', ''),
-      content: readFileSync(path.join(memDir, f), 'utf-8').slice(0, 2000),
+      content: readFileSync(path.join(memDir, f), 'utf-8').slice(0, 3000),
     }));
 
     res.json({ logs });

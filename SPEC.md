@@ -2,66 +2,45 @@
 
 _Single dashboard for everything Ivy knows and manages._
 
+**Last updated:** 2026-03-31
+
 ## Architecture
 
 ```
 ivy-portal/
-├── server.js          # Express API + static serving
+├── server.js          # Express API + static serving + better-sqlite3
 ├── public/            # Dashboard UI (vanilla HTML/CSS/JS)
 ├── lib/
-│   ├── messages-schema.sql    # Chat history DB schema
-│   ├── financial-schema.sql   # Financial tracking schema
-│   ├── entity-schema.sql      # Knowledge graph schema
-│   ├── telegram-indexer.js    # Telegram history → SQLite
-│   └── whatsapp-indexer.js    # WhatsApp history → SQLite
-├── SPEC.md            # This file
-├── ROADMAP.md         # Full god-mode phases (from projects/god-mode)
-├── ARCHITECTURE.md    # System architecture
-└── BRIEF.md           # Original dashboard brief
+│   ├── messages-schema.sql    # Chat history DB schema (future)
+│   ├── financial-schema.sql   # Financial tracking schema (future)
+│   ├── entity-schema.sql      # Knowledge graph schema (reference)
+│   ├── telegram-indexer.js    # Telegram history → SQLite (future)
+│   └── whatsapp-indexer.js    # WhatsApp history → SQLite (future)
+└── ROADMAP.md         # God-mode phases with honest status
 ```
 
 - **Port:** 18790 (localhost only, no auth)
-- **Stack:** Node.js + Express, vanilla frontend, SQLite reads
-- **Principle:** Read-only dashboard. Never mutates Ivy's data. Shells out to existing tools.
+- **Tailscale:** https://g-latitudee7470.tailf6c86e.ts.net:18790/
+- **Stack:** Node.js + Express, vanilla frontend, better-sqlite3 for reads
+- **Service:** `systemctl --user status ivy-portal`
+- **Principle:** Read-only dashboard. Never mutates Ivy's data.
 
-## MVP (v1) — EXISTS, needs polish
+## Data Source: `~/.openclaw/knowledge.sqlite` (SSOT)
 
-8 API endpoints, single-page dark dashboard:
+All data endpoints read from sqlite or shell out to existing tools.
+No JSON files, no duplicate data stores.
+
+## API Endpoints (10)
 
 | Endpoint | Source | Status |
 |----------|--------|--------|
-| `/api/system` | `free`, `df`, `systemctl` | ✅ Working |
-| `/api/calendar` | `gog calendar list --json` | ✅ Working |
-| `/api/finance` | `recurring-payments.py`, subscription-registry.json | ✅ Working |
-| `/api/projects` | `gh run list --json` | ✅ Working |
-| `/api/email` | `gog mail search --json` | ✅ Working |
-| `/api/crons` | `~/.openclaw/cron/jobs.json` | ✅ Working |
-| `/api/commitments` | `data/commitments.json` | ✅ Working |
-| `/api/memory` | `memory/*.md` (last 3 days) | ✅ Working |
-
-**Needed:** systemd service to keep it running, auto-refresh UI, mobile layout fixes.
-
-## v2 — Message History Search
-
-The killer feature. Full-text search across all Telegram + WhatsApp conversations.
-
-- Telegram indexer pulls all dialogs → `messages.sqlite`
-- WhatsApp indexer does the same
-- New endpoint: `/api/messages?q=...&chat=...&since=...`
-- UI: search bar + results with chat context
-- Incremental updates every 5 min via background job
-
-Schemas and indexer code exist in `lib/`. Need: wiring, testing, background scheduling.
-
-## v3 — Knowledge Graph Explorer
-
-Visual interface to `~/.openclaw/knowledge.sqlite`:
-- Entity list with relationships
-- Commitment tracker (due dates, overdue)
-- Timeline view of decisions + events
-
-## v4 — Real-time
-
-- WebSocket for live system health updates
-- Cron run notifications
-- PWA for mobile
+| `/api/system` | `free`, `df`, `systemctl` | ✅ |
+| `/api/calendar` | `gog calendar list --json` | ✅ |
+| `/api/finance` | knowledge.sqlite subscriptions + `recurring-payments.py` | ✅ Fixed 2026-03-31 |
+| `/api/projects` | `gh run list --json` (6 repos) | ✅ |
+| `/api/email` | `gog mail search --json` | ✅ |
+| `/api/crons` | `~/.openclaw/cron/jobs.json` | ✅ |
+| `/api/commitments` | knowledge.sqlite commitments | ✅ Fixed 2026-03-31 |
+| `/api/memory` | `memory/*.md` (last 5 days) | ✅ |
+| `/api/knowledge` | knowledge.sqlite entities + relations | ✅ New 2026-03-31 |
+| `/api/style` | knowledge.sqlite style_profile | ✅ New 2026-03-31 |

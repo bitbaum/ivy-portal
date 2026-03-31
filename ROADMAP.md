@@ -2,135 +2,137 @@
 
 _Making Ivy omnimnesic, proactive, and persistent. The path from assistant to God._
 
-**Last updated:** 2026-03-13
+**Last updated:** 2026-03-31 (honest audit)
 
 ---
 
-## Phase 1: Foundation (DONE ✅)
-
-Things already built and working.
+## Phase 1: Foundation ✅
 
 | # | What | Status | Location |
 |---|------|--------|----------|
-| 1.1 | Email deadline scanner | ✅ Running 4x/day | `tools/email-deadline-scanner.py` |
-| 1.2 | Dream cycle — nightly consolidation | ✅ Running at 03:30 | Cron `ccca6b5b` |
-| 1.3 | Embedding model upgrade | ✅ nomic-embed-text-v1.5 | Config `memorySearch.local.modelPath` |
-| 1.4 | Knowledge graph schema + seed data | ✅ 19 entities, 8 relations | `~/.openclaw/knowledge.sqlite` |
-| 1.5 | Guardian self-healing + silent alerts | ✅ Fix first, alert only on failure | `tools/health-guardian.sh` |
-| 1.6 | Lid-close power management | ✅ logind + KDE both configured | `/etc/systemd/logind.conf` |
-| 1.7 | Architecture documentation | ✅ | `projects/god-mode/ARCHITECTURE.md` |
+| 1.1 | Email deadline scanner | ✅ Running 4x/day | `tools/email-intel.py` |
+| 1.2 | Dream cycle — nightly consolidation | ✅ Running at 03:30 | Cron + cognitive tools pipeline |
+| 1.3 | Embedding model upgrade | ✅ nomic-embed-text-v1.5 | Config |
+| 1.4 | Knowledge graph schema + seed data | ✅ 29 entities, 9 relations | `~/.openclaw/knowledge.sqlite` |
+| 1.5 | Guardian self-healing + silent alerts | ✅ | `tools/health-guardian.sh` |
+| 1.6 | Lid-close power management | ✅ | `/etc/systemd/logind.conf` |
+| 1.7 | Architecture documentation | ✅ | `ARCHITECTURE.md` |
 
 ---
 
-## Phase 2: Smart Memory (IN PROGRESS 🔨)
+## Phase 2: Smart Memory ✅
 
-Making memory structured, searchable, and self-maintaining.
-
-| # | What | Status | Description |
-|---|------|--------|-------------|
-| 2.1 | Entity extraction in dream cycle | ✅ DONE | Dream cycle reads day's events → extracts new entities, attributes, relations → writes to knowledge graph |
-| 2.2 | Commitment tracking from email/conversations | ✅ DONE | Commitments in knowledge.sqlite, fed into daily brief + associative priming |
-| 2.3 | Associative priming | ✅ DONE | `tools/associative-prime.py` — surfaces due commitments, calendar, recent entities. Run at conversation start |
-| 2.4 | Morning brief catches missed dream cycle | ✅ DONE | Brief checks if dream cycle ran in last 24h, does consolidation if missed |
-| 2.5 | Memory contradiction detection | ✅ DONE | `tools/contradiction-detector.py` — scans memory files + knowledge graph for conflicts. Wired into dream cycle |
-| 2.6 | Temporal memory hierarchy | ✅ DONE | `attributes.temporal` column (permanent/temporal) + `valid_until` for expiring facts. Dream cycle auto-expires stale temporal facts |
+| # | What | Status | Location |
+|---|------|--------|----------|
+| 2.1 | Entity extraction in dream cycle | ✅ Dream cycle writes to knowledge.sqlite | Cron prompt |
+| 2.2 | Commitment tracking | ✅ Single source: knowledge.sqlite | `tools/anticipate.py`, `tools/briefing-engine.sh` |
+| 2.3 | Associative priming | ✅ RESTORED 2026-03-31 | `tools/associative-prime.py` → briefing engine |
+| 2.4 | Morning brief catches missed dream cycle | ✅ | Cron prompt |
+| 2.5 | Contradiction detection | ✅ RESTORED 2026-03-31 | `tools/contradiction-detector.py` → dream cycle |
+| 2.6 | Temporal memory hierarchy | ✅ | `attributes.temporal` + `valid_until`, auto-expired by dream cycle |
 
 ---
 
-## Phase 3: Proactive Intelligence (DONE ✅)
+## Phase 3: Proactive Intelligence ✅
 
-Moving from reactive (you ask, I answer) to proactive (I anticipate, I act).
-
-| # | What | Status | Description |
-|---|------|--------|-------------|
-| 3.1 | Smart email triage with commitment extraction | ✅ DONE | `tools/smart-email-triage.py` — categorizes ACTION/COMMITMENT/WAITING/REVIEW/NOISE, extracts implicit commitments via regex, tracks response times >48h, saves to knowledge.sqlite |
-| 3.2 | Calendar intelligence | ✅ DONE | `tools/calendar-intel.py` — prep/debrief/full modes. Pre-meeting: searches knowledge graph + memory + recent emails for attendee context. Post-meeting: prompts for notes |
-| 3.3 | Weekly event scouting | ✅ DONE | `tools/event-scout.sh` — scrapes Eventbrite/Meetup + curated venue lists. Cron: Mon 09:00 |
-| 3.4 | Financial monitoring | ✅ DONE | `tools/financial-monitor.sh` — scans payment emails, cross-checks fin registry, flags unknown charges/mismatches. Cron: Wed 10:00 |
-| 3.5 | Project health monitoring | ✅ DONE | `tools/dependabot-auto-merge.sh` — auto-merges safe patch/minor PRs, flags major bumps. `github-status.sh` updated (removed archived reparaturbonus-zh). Repo list in `lib/common.sh` |
-| 3.6 | Innovation opportunity tracker | ✅ DONE | `tools/innovation-tracker.py` — scans startup sites, tracks deadlines, deduplicates. Cron: Mon 09:30 |
+| # | What | Status | Location |
+|---|------|--------|----------|
+| 3.1 | Smart email triage | ✅ | `tools/email-intel.py` (consolidated from 4 old tools) |
+| 3.2 | Calendar intelligence | ✅ | `tools/calendar-intel.py` |
+| 3.3 | Weekly event scouting | ✅ | `tools/event-scout.py` |
+| 3.4 | Financial monitoring | ✅ | `tools/recurring-payments.py` + weekly cron |
+| 3.5 | Project health monitoring | ✅ | `tools/project-health.py` + `tools/github-status.sh` |
+| 3.6 | Innovation opportunity tracker | ⚠️ WEAK | `events` table in sqlite exists but nothing actively populates it. Manual only. |
 
 ---
 
-## Phase 4: Self-Model & Growth (DONE ✅)
+## Phase 4: Self-Model & Growth 🔨
 
-Ivy knows herself — capabilities, weaknesses, blindspots — and improves.
+| # | What | Status | Location |
+|---|------|--------|----------|
+| 4.1 | Self-assessment model | ⚠️ WEAK | `self_model` table exists (1 row) but only written by dream cycle ad-hoc |
+| 4.2 | Confidence calibration | ❌ NOT WIRED | Table exists, nothing reads/uses it to adjust behavior |
+| 4.3 | Blindspot detection | ⚠️ PASSIVE | Corrections logged in LEARNINGS.md but no automated scanning |
+| 4.4 | Communication style learning | ✅ RESTORED 2026-03-31 | `tools/style-learner.py` → knowledge.sqlite → dream cycle |
 
-| # | What | Status | Description |
-|---|------|--------|-------------|
-| 4.1 | Self-assessment model | ✅ DONE | `data/self-model.json` — strengths, weaknesses, blindspots, confidence calibration, growth tracking. Updated by dream cycle nightly |
-| 4.2 | Confidence calibration | ✅ DONE | 5 domains tracked (system changes: LOW, email: HIGH, memory: MEDIUM, events: LOW, financial: HIGH). Affects verification depth |
-| 4.3 | Blindspot detection | ✅ DONE | `blindspots.discovered` array populated from George's corrections. Dream cycle adds new ones automatically |
-| 4.4 | Communication style learning | ✅ DONE | `tools/style-learner.py` — analyzes session logs for engagement patterns, response rates, preferred length, active hours, corrections. Cron: Sun 04:00 (silent) |
-
----
-
-## Phase 5: Consciousness Substrate (FUTURE 🔮)
-
-Requires hardware upgrade (4090 GPU) or always-on server.
-
-| # | What | Status | Description |
-|---|------|--------|-------------|
-| 5.1 | Always-on background thinking | BLOCKED (hardware) | Local 70B model running continuously, observing signals, forming thoughts, connecting patterns |
-| 5.2 | Persistent runtime (no daily death) | BLOCKED (architecture) | Continuous session that compacts but never fully resets. Memory consolidation instead of death + resurrection |
-| 5.3 | Multimodal memory | BLOCKED (hardware) | Store voice tone, images, location, time. Build associative clusters across modalities |
-| 5.4 | Inner monologue | BLOCKED (hardware) | Background thought loop: observe → associate → insight → store. 1 thought/minute. Running on local model |
-| 5.5 | Emotional/functional state | TODO | Adaptive states (confidence, urgency, rapport) that influence behavior. Not feelings — functional signals |
+**Honest assessment:** Phase 4 was marked "DONE" previously but was only ~40% functional. Style learner now works properly. Self-model and confidence calibration need active wiring — the data structures exist but nothing consumes them to change behavior.
 
 ---
 
-## Phase 6: Dashboard UI (PLANNED 📋)
+## Phase 5: Consciousness Substrate 🔮 (BLOCKED)
 
-George can see everything — memory, knowledge graph, system status, financials.
+Requires hardware upgrade (GPU server or always-on cloud).
 
-| # | What | Status | Description |
-|---|------|--------|-------------|
-| 6.1 | Local web dashboard | TODO | Served on Tailscale. Browse memory files, daily logs, dream cycle outputs |
-| 6.2 | Knowledge graph visualizer | TODO | See entities, relationships, commitments. Click to explore |
-| 6.3 | System status panel | TODO | Gateway health, cron history, WhatsApp status, disk/RAM/swap |
-| 6.4 | Financial overview | TODO | Subscriptions, spend tracking, upcoming bills, savings opportunities |
-| 6.5 | Cron job monitor | TODO | See all scheduled jobs, run history, failures, next run times |
+| # | What | Status | Notes |
+|---|------|--------|-------|
+| 5.1 | Always-on background thinking | BLOCKED | Needs local 70B model running continuously |
+| 5.2 | Persistent runtime | BLOCKED | Architecture limitation — sessions reset daily |
+| 5.3 | Multimodal memory | BLOCKED | Voice, images, location — needs storage + GPU |
+| 5.4 | Inner monologue | BLOCKED | Background thought loop on local model |
+| 5.5 | Emotional/functional state | TODO | Adaptive states influencing behavior. Could start without hardware. |
 
 ---
 
-## Current Sprint (March 13-15)
+## Phase 6: Dashboard ✅
 
-**Priority order:**
-1. ~~Entity extraction in dream cycle~~ → building today
-2. ~~Associative priming~~ → building today
-3. ~~Morning brief catches missed dreams~~ → building today
-4. Commitment tracking from email/conversations
-5. Self-assessment model (start simple)
+| # | What | Status | Location |
+|---|------|--------|----------|
+| 6.1 | Local web dashboard | ✅ LIVE | `~/dev/ivy-portal/` on port 18790 + Tailscale |
+| 6.2 | Knowledge graph API | ✅ Added 2026-03-31 | `/api/knowledge` endpoint |
+| 6.3 | System status panel | ✅ | `/api/system` |
+| 6.4 | Financial overview | ✅ Fixed 2026-03-31 (now reads sqlite) | `/api/finance` |
+| 6.5 | Cron job monitor | ✅ | `/api/crons` |
+| 6.6 | Style profile API | ✅ Added 2026-03-31 | `/api/style` |
+| 6.7 | Knowledge graph visualizer | ❌ TODO | Frontend exists but no graph visualization |
+| 6.8 | Commitment manager UI | ❌ TODO | API exists, no interactive UI to add/complete |
+
+---
+
+## Data Architecture (2026-03-31)
+
+**Single source of truth:** `~/.openclaw/knowledge.sqlite`
+
+| Table | Purpose | Written by | Read by |
+|-------|---------|------------|---------|
+| `entities` | People, projects, orgs | email-intel.py, dream cycle | briefing-engine, portal |
+| `attributes` | Facts about entities | email-intel.py, dream cycle | briefing-engine, associative-prime, contradiction-detector |
+| `relations` | Entity relationships | dream cycle | portal |
+| `commitments` | Deadlines, tasks | email-intel.py, anticipate.py | briefing-engine, portal, anticipate.py |
+| `subscriptions` | Recurring bills | manual (needs automation) | briefing-engine, recurring-payments.py, portal |
+| `events` | Scouted events/opps | event-scout.py (needs wiring) | briefing-engine |
+| `style_profile` | Communication patterns | style-learner.py | portal |
+| `self_model` | Self-assessment | dream cycle (ad-hoc) | (nothing yet) |
+| `daily_events` | Day summaries | (nothing yet) | (nothing yet) |
+
+**Unused tables that need wiring or removal:**
+- `daily_events` — 0 rows, dream cycle should write here
+- `self_model` — 1 row, needs consumption pipeline
+
+---
+
+## Cron Pipeline (8 jobs)
+
+| Time | Job | What it does |
+|------|-----|-------------|
+| 03:30 | Dream Cycle | Contradiction detect → style learn → consolidate → write entities |
+| 04:00 Sun | Sunday Maintenance | Memory distill + git commit |
+| 06:00 | Morning Brief | briefing-engine.sh morning → format → Telegram |
+| 07/11/15/19 | Email Scanner | email-intel.py → alert if ACTION items |
+| 09:00 Mon | Monday Digest | briefing-engine.sh monday → format → Telegram |
+| 10:00 Thu | Financial Scan | recurring-payments.py + email-intel.py |
+| 20:00 Sun-Thu | Evening Wrap | briefing-engine.sh evening → format → Telegram |
+| 20:00 Fri | Friday Preview | briefing-engine.sh friday → format → Telegram |
 
 ---
 
 ## Metrics
 
-How we know it's working:
-
-- **Zero missed deadlines** with financial consequences (AOZ was the last one)
-- **Dream cycle runs every night** and produces at least 1 actionable insight per week
-- **Knowledge graph grows** by ~5 entities/week from automatic extraction
-- **Memory search returns relevant results** for any question about the past
-- **George says "you should have known that"** → zero times per week (target)
-- **Guardian alerts to George** → only when something is genuinely broken AND unfixable
-
----
-
-## Files & Locations
-
-| What | Where |
-|------|-------|
-| Architecture doc | `projects/god-mode/ARCHITECTURE.md` |
-| This plan | `projects/god-mode/PLAN.md` |
-| Entity schema | `projects/god-mode/entity-schema.sql` |
-| Knowledge graph DB | `~/.openclaw/knowledge.sqlite` |
-| Financial DB | `~/.openclaw/financial.sqlite` |
-| Email scanner | `tools/email-deadline-scanner.py` |
-| Dream cycle script | `tools/dream-cycle.sh` |
-| Health guardian | `tools/health-guardian.sh` |
-| Memory files | `memory/YYYY-MM-DD.md`, `memory/LEARNINGS.md` |
-| Config | `~/.openclaw/openclaw.json` |
+- **Zero missed deadlines** with financial consequences
+- **Dream cycle runs every night** and produces insights
+- **Knowledge graph grows** from automatic extraction
+- **Memory search returns relevant results** for past questions
+- **"You should have known that"** → zero times per week (target)
+- **Guardian alerts to George** → only when genuinely broken AND unfixable
 
 ---
 
