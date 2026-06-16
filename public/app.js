@@ -268,19 +268,19 @@ async function loadCommitments() {
   let html = '';
 
   for (const c of data.commitments) {
-    const isOverdue = c.due && c.due < today;
-    const isDueToday = c.due === today;
+    const isOverdue = c.due_date && c.due_date < today;
+    const isDueToday = c.due_date === today;
     const dueBadge = isOverdue ? badge('overdue', 'red') :
       isDueToday ? badge('today', 'orange') :
-      c.due ? badge(c.due, 'gray') : '';
+      c.due_date ? badge(c.due_date, 'gray') : '';
     const statusBadge = c.status === 'blocked' ? badge('blocked', 'yellow') :
       c.status === 'waiting' ? badge('waiting', 'blue') : '';
 
     html += `<div class="commitment-item">
-      <div class="commitment-text">${escHtml(c.text)} ${getActionLink(c.text)}</div>
+      <div class="commitment-text">${escHtml(c.description)} ${getActionLink(c.description)}</div>
       <div class="commitment-meta">
         ${dueBadge} ${statusBadge}
-        ${c.risk ? `<span>Risk: ${escHtml(c.risk)}</span>` : ''}
+        ${c.financial_impact ? `<span>Impact: ${escHtml(c.financial_impact)}</span>` : ''}
       </div>
     </div>`;
   }
@@ -353,6 +353,33 @@ function parsePaymentsText(text) {
   return sections;
 }
 
+// Render structured JSON payment items (from recurring-payments.py --json output)
+function renderPaymentItems(items, sectionTitle, colorVar, sectionClass) {
+  if (!items || items.length === 0) return '';
+  let html = `<div class="payment-section ${sectionClass}">
+    <div class="payment-section-title" style="color:${colorVar}">${escHtml(sectionTitle)}</div>`;
+  for (const item of items) {
+    const daysUntil = item.days_until;
+    const isOverdue = daysUntil < 0;
+    const urgentSoon = !isOverdue && daysUntil <= 5;
+    const dueColor = isOverdue ? 'var(--red)' : urgentSoon ? 'var(--yellow)' : 'var(--text-dim)';
+    const dueLabel = isOverdue
+      ? `${escHtml(item.next_expected)} <span style="font-size:0.7rem">(${Math.abs(daysUntil)}d overdue)</span>`
+      : `${escHtml(item.next_expected)} <span style="font-size:0.7rem">(in ${daysUntil}d)</span>`;
+    html += `<div class="payment-item">
+      <div class="payment-name">
+        <strong>${escHtml(item.name)}</strong>
+        ${item.typical_amount ? ` <span style="font-family:var(--mono);color:var(--accent)">${escHtml(item.typical_amount)}</span>` : ''}
+        ${item.frequency ? ` <span style="color:var(--text-dim);font-size:0.8rem">${escHtml(item.frequency)}</span>` : ''}
+        ${item.notes ? `<div class="payment-detail">${escHtml(item.notes)}</div>` : ''}
+      </div>
+      ${item.next_expected ? `<span class="payment-due" style="color:${dueColor}">${dueLabel}</span>` : ''}
+    </div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
 function renderPaymentSections(sections, cssClass) {
   let html = '';
   for (const section of sections) {
@@ -392,73 +419,52 @@ async function loadFinance() {
 
   let html = '';
 
-  // Parse and render overdue payments
-  if (data.overdue) {
+  // Overdue payments — may be JSON array or legacy text
+  if (Array.isArray(data.overdue) && data.overdue.length > 0) {
+    html += renderPaymentItems(data.overdue, 'Overdue', 'var(--red)', 'overdue');
+  } else if (data.overdue && typeof data.overdue === 'string') {
     const sections = parsePaymentsText(data.overdue);
-    if (sections.length > 0) {
-      html += renderPaymentSections(sections, 'overdue');
-    } else {
-      // Fallback: show as styled text if parsing fails
-      html += `<div class="payment-section overdue">
-        <div class="payment-section-title" style="color:var(--red)">Overdue</div>
-        <div style="font-size:0.85rem;white-space:pre-wrap">${escHtml(data.overdue)}</div>
-      </div>`;
-    }
+    html += sections.length > 0
+      ? renderPaymentSections(sections, 'overdue')
+      : `<div class="payment-section overdue"><div class="payment-section-title" style="color:var(--red)">Overdue</div><div style="font-size:0.85rem;white-space:pre-wrap">${escHtml(data.overdue)}</div></div>`;
   }
 
-  // Parse and render upcoming payments
-  if (data.upcoming) {
+  // Upcoming payments — may be JSON array or legacy text
+  if (Array.isArray(data.upcoming) && data.upcoming.length > 0) {
+    html += renderPaymentItems(data.upcoming, 'Upcoming (14 days)', 'var(--accent)', 'upcoming');
+  } else if (data.upcoming && typeof data.upcoming === 'string') {
     const sections = parsePaymentsText(data.upcoming);
-    if (sections.length > 0) {
-      html += renderPaymentSections(sections, 'upcoming');
-    } else {
-      html += `<div class="payment-section upcoming">
-        <div class="payment-section-title" style="color:var(--accent)">Upcoming</div>
-        <div style="font-size:0.85rem;white-space:pre-wrap">${escHtml(data.upcoming)}</div>
-      </div>`;
-    }
+    html += sections.length > 0
+      ? renderPaymentSections(sections, 'upcoming')
+      : `<div class="payment-section upcoming"><div class="payment-section-title" style="color:var(--accent)">Upcoming</div><div style="font-size:0.85rem;white-space:pre-wrap">${escHtml(data.upcoming)}</div></div>`;
   }
 
-  // Subscriptions
-  const subs = (data.subscriptions || []).filter(s => s.type !== 'credit card');
-  const cards = (data.subscriptions || []).filter(s => s.type === 'credit card');
+  // Subscriptions — fields: name, vendor, amount, currency, frequency, status, next_due, notes
+  const active = (data.subscriptions || []).filter(s => s.status !== 'cancelled');
+  const cancelled = (data.subscriptions || []).filter(s => s.status === 'cancelled');
 
-  if (subs.length > 0) {
+  if (active.length > 0) {
     html += `<h3>Subscriptions</h3>
-    <table><thead><tr><th>Name</th><th>Cost</th><th>Method</th><th>Status</th><th></th></tr></thead><tbody>`;
-    for (const s of subs) {
-      const statusColor = s.status === 'active' ? 'green' :
-        s.status === 'DISPUTED' ? 'red' : 'yellow';
+    <table><thead><tr><th>Name</th><th>Cost</th><th>Vendor</th><th>Freq</th><th>Next Due</th><th></th></tr></thead><tbody>`;
+    for (const s of active) {
+      const statusColor = s.status === 'active' ? 'green' : s.status === 'paused' ? 'yellow' : 'gray';
+      const cost = s.amount ? `${s.amount} ${s.currency || ''}`.trim() : '—';
       html += `<tr>
         <td>${escHtml(s.name)}</td>
-        <td style="font-family:var(--mono)">${escHtml(s.cost)}</td>
-        <td>${escHtml(s.method)}</td>
-        <td>${badge(s.status, statusColor)}</td>
+        <td style="font-family:var(--mono)">${escHtml(cost)}</td>
+        <td style="color:var(--text-dim)">${escHtml(s.vendor || '—')}</td>
+        <td style="color:var(--text-dim)">${escHtml(s.frequency || '—')}</td>
+        <td style="font-family:var(--mono);font-size:0.8rem;color:var(--text-dim)">${escHtml(s.next_due || '—')}</td>
         <td>${getActionLink(s.name)}</td>
       </tr>`;
     }
     html += '</tbody></table>';
   }
 
-  if (cards.length > 0) {
-    html += `<h3 style="margin-top:16px">Credit Cards</h3>
-    <table><thead><tr><th>Card</th><th>Method</th><th>Status</th><th></th></tr></thead><tbody>`;
-    for (const c of cards) {
-      html += `<tr>
-        <td>${escHtml(c.name)}</td>
-        <td>${escHtml(c.method)}</td>
-        <td>${badge(c.status, 'green')}</td>
-        <td>${getActionLink(c.name)}</td>
-      </tr>`;
-    }
-    html += '</tbody></table>';
-  }
-
-  // Closed
-  if (data.closed && data.closed.length > 0) {
-    html += `<h3 style="margin-top:16px">Closed</h3>`;
-    for (const c of data.closed) {
-      html += `<div style="font-size:0.85rem;padding:4px 0;color:var(--text-dim)">${escHtml(c.name)} \u2014 ${badge(c.status, 'gray')}</div>`;
+  if (cancelled.length > 0) {
+    html += `<h3 style="margin-top:16px">Cancelled</h3>`;
+    for (const c of cancelled) {
+      html += `<div style="font-size:0.85rem;padding:4px 0;color:var(--text-dim)">${escHtml(c.name)}${c.notes ? ` \u2014 <span style="font-size:0.8rem">${escHtml(c.notes)}</span>` : ''}</div>`;
     }
   }
 

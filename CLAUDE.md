@@ -40,8 +40,8 @@ Personal localhost dashboard for George's AI assistant infrastructure (OpenClaw)
 - Add Tailscale URL display (accessible remotely via https://g-latitudee7470.tailf6c86e.ts.net)
 - Consider adding a simple systemd service file for auto-start
 - Action links should appear on ALL items that need attention, not just some
-- Financial section: the recurring-payments.py output is raw text in a <pre> — should be parsed and rendered as proper cards/table
-- Memory section (recent daily logs) endpoint exists but isn't rendered in the UI yet
+- Financial section: ✓ Fixed — overdue/upcoming render as structured cards from JSON; subscriptions table uses correct field names
+- Memory section: ✓ Fixed — endpoint and UI rendering both implemented
 
 ## Testing
 ```bash
