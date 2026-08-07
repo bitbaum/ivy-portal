@@ -64,7 +64,7 @@ echo "[auto-merge] sweeping open PRs against ${BASE_BRANCH} in ${REPO}"
 # batching this script exists to prevent.
 base_sha=$(gh api "repos/${REPO}/commits/${BASE_BRANCH}" --jq '.sha')
 base_ci=$(gh run list --repo "$REPO" --workflow "$CI_WORKFLOW" --branch "$BASE_BRANCH" --limit 1 \
-  --json status,conclusion,headSha --jq '.[0] // empty')
+  --json databaseId,status,conclusion,headSha --jq '.[0] // empty')
 
 if [ -z "$base_ci" ]; then
   echo "[auto-merge] no CI history for ${BASE_BRANCH} — proceeding"
@@ -81,14 +81,37 @@ else
     echo "[auto-merge] ${BASE_BRANCH} CI is still running — deferring to the next sweep"
     exit 0
   fi
+  # A red base must not become a trap for the PR that repairs it.
+  #
+  # "Never merge onto red" is right for an unrelated change: it stops a broken
+  # base quietly collecting more of them and getting harder to diagnose. But
+  # when the PR *is* the repair, the same rule deadlocks the repo — the fix
+  # cannot travel the path its own redness blocks, and only a human can move
+  # it. Seen in maonakamoto/aoz-housing on 2026-08-07: E2E red on the base, the
+  # fix sitting green in a PR, every sweep refusing politely.
+  #
+  # So identify WHICH jobs are red and let a PR through only if its own checks
+  # pass every one of them. Not a weakening: a PR's checks run on the MERGE
+  # result (refs/pull/N/merge), so green-on-those-jobs is direct evidence the
+  # post-merge base is better than the pre-merge base. Still refused: a PR that
+  # does not cover the failing jobs, one that covers only some of them, and a
+  # base failure whose jobs cannot be identified at all.
+  base_red_jobs=""
   if [ "$base_conclusion" != "success" ]; then
-    echo "[auto-merge] ${BASE_BRANCH} CI is ${base_conclusion} — refusing to merge onto a broken base" >&2
-    exit 0
+    base_run_id=$(printf '%s' "${base_ci}" | jq -r '.databaseId')
+    base_red_jobs=$(gh run view "${base_run_id}" --repo "$REPO" --json jobs \
+      --jq '[.jobs[] | select(.conclusion == "failure") | .name] | .[]' 2>/dev/null || true)
+    if [ -z "${base_red_jobs}" ]; then
+      echo "[auto-merge] ${BASE_BRANCH} CI is ${base_conclusion} and no failing job could be identified — refusing to merge onto a broken base" >&2
+      exit 0
+    fi
+    echo "[auto-merge] ${BASE_BRANCH} CI is ${base_conclusion} — failing: $(printf '%s' "${base_red_jobs}" | tr '\n' ' ')" >&2
+    echo "[auto-merge] only a PR that is green on those exact jobs may merge (its checks run on the merge result)"
   fi
 fi
 
 prs_json=$(gh pr list --repo "$REPO" --state open --base "$BASE_BRANCH" --limit 50 \
-  --json number,title,isDraft,mergeable,mergeStateStatus,labels,statusCheckRollup)
+  --json number,title,isDraft,mergeable,mergeStateStatus,labels,statusCheckRollup,createdAt)
 
 count=$(printf '%s' "$prs_json" | jq 'length')
 if [ "$count" -eq 0 ]; then
@@ -136,6 +159,17 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
   if [ "$verdict" != "merge" ]; then
     echo "[auto-merge] #${number} ${verdict} — ${title}"
 
+    # "No checks reported yet" is transient for a PR opened seconds ago and
+    # PERMANENT for an old one: GitHub does not retroactively run workflows on
+    # a PR nobody has pushed to, so it will sit here forever looking patient.
+    # Report it; only a push, or a close/reopen, will ever produce checks.
+    if [ "$verdict" = "skip: no checks reported yet" ] && [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+      created=$(printf '%s' "$pr" | jq -r '.createdAt // ""')
+      if [ -n "$created" ] && [ "$created" \< "$(date -u -d '2 hours ago' +%Y-%m-%dT%H:%M:%SZ)" ]; then
+        echo "- ⚠️ #${number} has no checks and is over 2h old — it will never gain any on its own — ${title}" >> "$GITHUB_STEP_SUMMARY"
+      fi
+    fi
+
     # A CANCELLED check is not a verdict, it is noise: CI workflows in this
     # fleet use `concurrency: cancel-in-progress`, so an unrelated newer run on
     # the same ref can kill a PR's build. Nothing ever re-runs it, the PR is
@@ -179,9 +213,59 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
     sleep 5
   done
 
+  # A conflicted PR is not "not ready yet" — it is stuck, and nothing else will
+  # unstick it. Skipping it quietly is how a PR sits DIRTY while the base moves
+  # on: every sweep passes over it in silence and no signal ever reaches a
+  # human. Say it loudly, and put it in the job summary where it is seen.
+  if [ "$mergeable" = "CONFLICTING" ]; then
+    echo "[auto-merge] #${number} CONFLICTS with ${BASE_BRANCH} and will never merge itself — ${title}" >&2
+    if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+      echo "- ⚠️ #${number} conflicts with \`${BASE_BRANCH}\` and needs resolving — ${title}" >> "$GITHUB_STEP_SUMMARY"
+    fi
+    continue
+  fi
+
   if [ "$mergeable" != "MERGEABLE" ]; then
     echo "[auto-merge] #${number} skip: not mergeable (${mergeable}/${state}) — ${title}"
     continue
+  fi
+
+  # Keep the branch current instead of merging a PR that was proven against an
+  # older base. This is also how conflicts surface EARLY: a branch updated on
+  # the sweep after the merge that broke it fails here, minutes later, rather
+  # than hours later when someone finally looks. One update per sweep, for the
+  # same reason only one PR is merged per sweep.
+  if [ "$state" = "BEHIND" ]; then
+    echo "[auto-merge] #${number} is behind ${BASE_BRANCH} — updating it before merging: ${title}"
+    if gh api -X PUT "repos/${REPO}/pulls/${number}/update-branch" --silent 2>/dev/null; then
+      echo "[auto-merge] #${number} updated; its checks now run against current ${BASE_BRANCH}"
+    else
+      echo "[auto-merge] #${number} update-branch failed — leaving for the next sweep" >&2
+    fi
+    break
+  fi
+
+  # Red base: this PR merges only if it proves every failing job green.
+  if [ -n "${base_red_jobs}" ]; then
+    pr_green=$(printf '%s' "$pr" | jq -r '
+      [ .statusCheckRollup[]?
+        | select(((.conclusion // .state // "") | test("^(SUCCESS|NEUTRAL|SKIPPED)$")))
+        | (.name // .context) ] | .[]')
+    uncovered=""
+    while IFS= read -r job; do
+      [ -z "$job" ] && continue
+      printf '%s\n' "$pr_green" | grep -Fxq "$job" || uncovered="${uncovered}${job}; "
+    done <<INNER_EOF
+${base_red_jobs}
+INNER_EOF
+    if [ -n "$uncovered" ]; then
+      echo "[auto-merge] #${number} skip: ${BASE_BRANCH} is red on [${uncovered%; }] and this PR does not prove those green — ${title}"
+      continue
+    fi
+    echo "[auto-merge] #${number} is green on every job ${BASE_BRANCH} fails — merging it to repair the base: ${title}" >&2
+    if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+      echo "- 🔧 #${number} merged onto a red \`${BASE_BRANCH}\` because it passes every failing job — ${title}" >> "$GITHUB_STEP_SUMMARY"
+    fi
   fi
 
   echo "[auto-merge] #${number} green and ready — merging: ${title}"
