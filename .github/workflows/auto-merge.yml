@@ -28,6 +28,19 @@ permissions:
   contents: write # merge the PR
   pull-requests: write # read PR state, delete the branch
   actions: write # dispatch the re-arm workflows
+  # Load-bearing on a PRIVATE repo, and only there. The sweep asks for
+  # statusCheckRollup to decide whether a PR is green; on a public repo that is
+  # readable with no explicit scope, so this workflow was ported across the
+  # fleet without these two lines and worked everywhere it was tried. On a
+  # private repo the same query dies with
+  #   GraphQL: Resource not accessible by integration
+  #     (repository.pullRequests.nodes.0.statusCheckRollup...)
+  # which fails the whole sweep — so NO PR in this repo has ever been merged by
+  # it. The failure is silent in the way that matters: the sweep reports a red
+  # run, not "I cannot read checks", and a repo with no merges looks exactly
+  # like a repo with nothing ready to merge.
+  checks: read # check-run conclusions (CI jobs)
+  statuses: read # commit statuses (external reporters)
 
 # Never let two sweeps merge concurrently — they would race on the same PRs.
 concurrency:
