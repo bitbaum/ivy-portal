@@ -301,6 +301,11 @@ function parsePaymentsText(text) {
     if (!trimmed) continue;
 
     // Section headers
+    // \uFE0F is the variation selector of \u26A0\uFE0F. Listing both code units in
+    // the class is intentional: this only needs to detect a leading status
+    // glyph, and it parses live payment output. Rewriting the semantics
+    // without a fixture of real input risks silently dropping sections.
+    // eslint-disable-next-line no-misleading-character-class
     if (/^[\u26A0\uFE0F\u2705\u2753\u274C]/.test(trimmed) || /^(MANUAL|AUTO|UNKNOWN|OVERDUE)/i.test(trimmed.replace(/^[^\w]*/, ''))) {
       const sectionMatch = trimmed.match(/^[^\w]*(.*?):/);
       if (sectionMatch) {
@@ -315,7 +320,8 @@ function parsePaymentsText(text) {
     }
 
     // Payment item: starts with bullet (• or -)
-    const itemMatch = trimmed.match(/^[\u26A0\uFE0F\s]*[\u2022\-]\s*(.+?)(?:\s+\u2014\s+(.+?))?(?:\s*\(([^)]+)\))?$/);
+    // eslint-disable-next-line no-misleading-character-class -- see above.
+    const itemMatch = trimmed.match(/^[\u26A0\uFE0F\s]*[\u2022-]\s*(.+?)(?:\s+\u2014\s+(.+?))?(?:\s*\(([^)]+)\))?$/);
     if (itemMatch && currentSection) {
       currentSection.items.push({
         name: itemMatch[1].trim(),
@@ -380,7 +386,7 @@ function renderPaymentItems(items, sectionTitle, colorVar, sectionClass) {
   return html;
 }
 
-function renderPaymentSections(sections, cssClass) {
+function renderPaymentSections(sections, _cssClass) {
   let html = '';
   for (const section of sections) {
     if (section.items.length === 0) continue;
@@ -447,7 +453,6 @@ async function loadFinance() {
     html += `<h3>Subscriptions</h3>
     <table><thead><tr><th>Name</th><th>Cost</th><th>Vendor</th><th>Freq</th><th>Next Due</th><th></th></tr></thead><tbody>`;
     for (const s of active) {
-      const statusColor = s.status === 'active' ? 'green' : s.status === 'paused' ? 'yellow' : 'gray';
       const cost = s.amount ? `${s.amount} ${s.currency || ''}`.trim() : '—';
       html += `<tr>
         <td>${escHtml(s.name)}</td>
@@ -488,9 +493,6 @@ async function loadMemory() {
     const log = data.logs[i];
     const isToday = log.date === today;
     const label = isToday ? 'Today' : formatDate(log.date + 'T00:00:00');
-    // Extract first meaningful line as summary
-    const lines = log.content.split('\n').filter(l => l.trim() && !l.startsWith('#'));
-    const summary = lines[0] ? lines[0].replace(/^\*\*.*?\*\*:?\s*/, '').slice(0, 80) : 'No summary';
     const isOpen = i === 0; // First day expanded by default
 
     html += `<div class="memory-day">
@@ -505,6 +507,10 @@ async function loadMemory() {
   el('memory-content').innerHTML = html;
 }
 
+// Invoked from an inline `onclick="toggleMemory(this)"` in the memory-day
+// template above. ESLint cannot see usage inside a template string, so the
+// binding is published explicitly rather than suppressed — that also makes
+// the HTML's dependency on it visible to a reader.
 function toggleMemory(headerEl) {
   headerEl.classList.toggle('open');
   const content = headerEl.nextElementSibling;
@@ -706,3 +712,5 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshAll();
   refreshTimer = setInterval(refreshAll, REFRESH_INTERVAL);
 });
+
+window.toggleMemory = toggleMemory;
