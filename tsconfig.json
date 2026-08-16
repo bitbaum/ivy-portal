@@ -1,0 +1,30 @@
+{
+  // There is no TypeScript here and there need not be. `checkJs` is the gate:
+  // it type-checks the JS that already exists, using types from the installed
+  // packages. It paid for itself immediately — see the whatsapp-indexer note
+  // below, and the two `Entity` union narrowings in lib/telegram-indexer.js.
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "moduleResolution": "bundler",
+    "module": "preserve",
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["server.js", "lib/**/*.js", "public/**/*.js", "scripts/**/*.mjs"],
+  "exclude": [
+    "node_modules",
+    // EXCLUDED, and this is a finding rather than a convenience. This module
+    // `require`s "whatsapp-web.js" and "qrcode-terminal", and NEITHER is in
+    // package.json — so it would throw at require time. Nothing imports it
+    // either, so today it is unreachable orphan code and the crash is latent.
+    // It is excluded rather than silently made to pass, because the two real
+    // options (install a heavy Puppeteer dependency for code nothing calls, or
+    // delete a half-finished feature) are decisions for whoever owns the
+    // WhatsApp integration, not for a CI commit.
+    "lib/whatsapp-indexer.js"
+  ]
+}

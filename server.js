@@ -1,5 +1,5 @@
 const express = require('express');
-const { execFile, exec } = require('child_process');
+const { exec } = require('child_process');
 const { readFileSync, existsSync, readdirSync } = require('fs');
 const path = require('path');
 const os = require('os');
@@ -123,8 +123,11 @@ app.get('/api/finance', async (_req, res) => {
   ]);
 
   let upcoming = null, overdue = null;
-  try { if (upcomingResult.ok) upcoming = JSON.parse(upcomingResult.data); } catch {}
-  try { if (overdueResult.ok) overdue = JSON.parse(overdueResult.data); } catch {}
+  // Malformed output means "no data", not a failed request: the shell helper
+  // already reported .ok, and a parse error here should leave the field null
+  // rather than 500 the whole dashboard.
+  try { if (upcomingResult.ok) upcoming = JSON.parse(upcomingResult.data); } catch { /* leave null */ }
+  try { if (overdueResult.ok) overdue = JSON.parse(overdueResult.data); } catch { /* leave null */ }
 
   res.json({ subscriptions, upcoming, overdue });
 });
