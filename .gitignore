@@ -2,3 +2,6 @@ node_modules/
 *.png
 *.jpg
 .playwright-mcp/
+
+# Per-session agent worktrees — scratch, never part of the repo.
+.claude/worktrees/
