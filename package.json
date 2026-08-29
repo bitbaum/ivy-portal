@@ -1,6 +1,9 @@
 {
   "name": "ivy-portal",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=20"
+  },
   "description": "Personal OpenClaw dashboard — localhost god mode",
   "main": "server.js",
   "scripts": {
