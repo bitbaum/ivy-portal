@@ -363,8 +363,8 @@ function parsePaymentsText(text) {
     // the class is intentional: this only needs to detect a leading status
     // glyph, and it parses live payment output. Rewriting the semantics
     // without a fixture of real input risks silently dropping sections.
-    // eslint-disable-next-line no-misleading-character-class
     if (
+      // eslint-disable-next-line no-misleading-character-class
       /^[\u26A0\uFE0F\u2705\u2753\u274C]/.test(trimmed) ||
       /^(MANUAL|AUTO|UNKNOWN|OVERDUE)/i.test(trimmed.replace(/^[^\w]*/, ''))
     ) {
@@ -381,8 +381,8 @@ function parsePaymentsText(text) {
     }
 
     // Payment item: starts with bullet (• or -)
-    // eslint-disable-next-line no-misleading-character-class -- see above.
     const itemMatch = trimmed.match(
+      // eslint-disable-next-line no-misleading-character-class -- see above.
       /^[\u26A0\uFE0F\s]*[\u2022-]\s*(.+?)(?:\s+\u2014\s+(.+?))?(?:\s*\(([^)]+)\))?$/,
     );
     if (itemMatch && currentSection) {
