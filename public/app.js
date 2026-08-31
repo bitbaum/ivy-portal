@@ -16,17 +16,28 @@ async function fetchJson(url) {
   }
 }
 
-function el(id) { return document.getElementById(id); }
+function el(id) {
+  return document.getElementById(id);
+}
 
-function dot(color) { return `<span class="status-dot ${color}"></span>`; }
+function dot(color) {
+  return `<span class="status-dot ${color}"></span>`;
+}
 
-function badge(text, color) { return `<span class="badge badge-${color}">${escHtml(text)}</span>`; }
+function badge(text, color) {
+  return `<span class="badge badge-${color}">${escHtml(text)}</span>`;
+}
 
-function actionLink(url, label) { return `<a href="${url}" target="_blank" class="action-link" title="${label}">\u2192 ${label}</a>`; }
+function actionLink(url, label) {
+  return `<a href="${url}" target="_blank" class="action-link" title="${label}">\u2192 ${label}</a>`;
+}
 
 // Action link mappings for known items
 const ACTION_LINKS = {
-  'Claude Max (Anthropic)': { url: 'https://console.anthropic.com/settings/billing', label: 'Manage' },
+  'Claude Max (Anthropic)': {
+    url: 'https://console.anthropic.com/settings/billing',
+    label: 'Manage',
+  },
   'iCloud Storage (Apple)': { url: 'https://appleid.apple.com/account/manage', label: 'Manage' },
   'placeB Storage Box': { url: 'https://placeb.ch/login', label: 'placeB' },
   'Checkpoint Zurich': { url: 'mailto:info@checkpoint-zurich.ch', label: 'Email' },
@@ -35,21 +46,28 @@ const ACTION_LINKS = {
   'Chase Ink': { url: 'https://chase.com/personal/credit-cards', label: 'Chase' },
   'Amex Gold': { url: 'https://americanexpress.com/login', label: 'Amex' },
   'Amazon Amex': { url: 'https://americanexpress.com/login', label: 'Amex' },
-  'orangecat': { url: 'https://github.com/g-but/orangecat/actions', label: 'Actions' },
-  'botsmann': { url: 'https://github.com/g-but/botsmann/actions', label: 'Actions' },
-  'revampit': { url: 'https://github.com/g-but/revampit/actions', label: 'Actions' },
+  orangecat: { url: 'https://github.com/g-but/orangecat/actions', label: 'Actions' },
+  botsmann: { url: 'https://github.com/g-but/botsmann/actions', label: 'Actions' },
+  revampit: { url: 'https://github.com/g-but/revampit/actions', label: 'Actions' },
   'aoz-housing': { url: 'https://github.com/g-but/aoz-housing/actions', label: 'Actions' },
   'revamp-info': { url: 'https://github.com/g-but/revamp-info/actions', label: 'Actions' },
-  'swiss-longevity-hub': { url: 'https://github.com/g-but/swiss-longevity-hub/actions', label: 'Actions' },
-  'Return AOZ keys': { url: 'https://maps.google.com/?q=Witikonerstrasse+440+Zurich', label: 'Map' },
+  'swiss-longevity-hub': {
+    url: 'https://github.com/g-but/swiss-longevity-hub/actions',
+    label: 'Actions',
+  },
+  'Return AOZ keys': {
+    url: 'https://maps.google.com/?q=Witikonerstrasse+440+Zurich',
+    label: 'Map',
+  },
   'Google Cloud refund': { url: 'https://console.cloud.google.com/support', label: 'GCP Support' },
-  'SINGA': { url: 'https://sfrm.io/7d82k', label: 'SINGA' },
+  SINGA: { url: 'https://sfrm.io/7d82k', label: 'SINGA' },
 };
 
 function getActionLink(name) {
   if (ACTION_LINKS[name]) return actionLink(ACTION_LINKS[name].url, ACTION_LINKS[name].label);
   for (const [key, val] of Object.entries(ACTION_LINKS)) {
-    if (name && name.toLowerCase().includes(key.toLowerCase())) return actionLink(val.url, val.label);
+    if (name && name.toLowerCase().includes(key.toLowerCase()))
+      return actionLink(val.url, val.label);
   }
   return '';
 }
@@ -65,7 +83,11 @@ function timeAgo(iso) {
 
 function formatDate(iso) {
   if (!iso) return '\u2014';
-  return new Date(iso).toLocaleDateString('en-CH', { weekday: 'short', month: 'short', day: 'numeric' });
+  return new Date(iso).toLocaleDateString('en-CH', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 function formatTime(iso) {
@@ -96,7 +118,11 @@ function mdToHtml(md) {
 
 async function loadSystem() {
   const data = await fetchJson('/api/system');
-  if (data._error) { el('system-content').innerHTML = `<div class="error-state">Error: ${escHtml(data._error)}</div>`; return; }
+  if (data._error) {
+    el('system-content').innerHTML =
+      `<div class="error-state">Error: ${escHtml(data._error)}</div>`;
+    return;
+  }
 
   let html = '';
 
@@ -164,21 +190,33 @@ async function loadSystem() {
 
 async function loadCrons() {
   const data = await fetchJson('/api/crons');
-  if (data._error) { el('crons-content').innerHTML = `<div class="error-state">Error: ${escHtml(data._error)}</div>`; return; }
-  if (!data.jobs || data.jobs.length === 0) { el('crons-content').innerHTML = '<div class="empty-state">No cron jobs found</div>'; return; }
+  if (data._error) {
+    el('crons-content').innerHTML = `<div class="error-state">Error: ${escHtml(data._error)}</div>`;
+    return;
+  }
+  if (!data.jobs || data.jobs.length === 0) {
+    el('crons-content').innerHTML = '<div class="empty-state">No cron jobs found</div>';
+    return;
+  }
 
-  const active = data.jobs.filter(j => j.enabled);
-  const disabled = data.jobs.filter(j => !j.enabled);
+  const active = data.jobs.filter((j) => j.enabled);
+  const disabled = data.jobs.filter((j) => !j.enabled);
 
   let html = `<div style="margin-bottom:8px;font-size:0.85rem;color:var(--text-dim)">${active.length} active, ${disabled.length} disabled</div>`;
 
   for (const job of data.jobs) {
-    const statusColor = !job.enabled ? 'gray' :
-      job.lastStatus === 'ok' ? 'green' :
-      job.lastStatus === 'skipped' ? 'yellow' : 'red';
-    const statusBadge = !job.enabled ? badge('off', 'gray') :
-      job.lastStatus === 'ok' ? badge('ok', 'green') :
-      badge(job.lastStatus || '?', job.consecutiveErrors > 0 ? 'red' : 'yellow');
+    const statusColor = !job.enabled
+      ? 'gray'
+      : job.lastStatus === 'ok'
+        ? 'green'
+        : job.lastStatus === 'skipped'
+          ? 'yellow'
+          : 'red';
+    const statusBadge = !job.enabled
+      ? badge('off', 'gray')
+      : job.lastStatus === 'ok'
+        ? badge('ok', 'green')
+        : badge(job.lastStatus || '?', job.consecutiveErrors > 0 ? 'red' : 'yellow');
 
     html += `<div class="cron-item">
       <div class="cron-name">${dot(statusColor)}${escHtml(job.name)}</div>
@@ -197,7 +235,11 @@ async function loadCrons() {
 
 async function loadCalendar() {
   const data = await fetchJson('/api/calendar');
-  if (data._error) { el('calendar-content').innerHTML = `<div class="error-state">Error: ${escHtml(data._error)}</div>`; return; }
+  if (data._error) {
+    el('calendar-content').innerHTML =
+      `<div class="error-state">Error: ${escHtml(data._error)}</div>`;
+    return;
+  }
 
   // Handle both array and object responses
   let events = [];
@@ -234,15 +276,19 @@ async function loadCalendar() {
   const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
   for (const [day, dayEvents] of Object.entries(byDay)) {
-    const label = day === today ? 'Today' : day === tomorrow ? 'Tomorrow' : formatDate(day + 'T00:00:00');
+    const label =
+      day === today ? 'Today' : day === tomorrow ? 'Tomorrow' : formatDate(day + 'T00:00:00');
     html += `<div class="cal-day-header">${label}</div>`;
     for (const ev of dayEvents) {
       const title = ev.summary || ev.Subject || ev.title || ev.Summary || 'Untitled';
       const hasTime = ev._startStr.includes('T');
       const time = hasTime ? formatTime(ev._startStr) : 'All day';
       const location = ev.location || ev.Location || '';
-      const gcalLink = ev.htmlLink || `https://calendar.google.com/calendar/u/0/r/day/${day.replace(/-/g, '/')}`;
-      const locationLink = location ? `https://maps.google.com/?q=${encodeURIComponent(location)}` : '';
+      const gcalLink =
+        ev.htmlLink || `https://calendar.google.com/calendar/u/0/r/day/${day.replace(/-/g, '/')}`;
+      const locationLink = location
+        ? `https://maps.google.com/?q=${encodeURIComponent(location)}`
+        : '';
       html += `<div class="cal-event">
         <span class="cal-time">${time}</span>
         <a href="${gcalLink}" target="_blank" class="cal-title email-link">${escHtml(title)}</a>
@@ -258,7 +304,11 @@ async function loadCalendar() {
 
 async function loadCommitments() {
   const data = await fetchJson('/api/commitments');
-  if (data._error) { el('commitments-content').innerHTML = `<div class="error-state">Error: ${escHtml(data._error)}</div>`; return; }
+  if (data._error) {
+    el('commitments-content').innerHTML =
+      `<div class="error-state">Error: ${escHtml(data._error)}</div>`;
+    return;
+  }
   if (!data.commitments || data.commitments.length === 0) {
     el('commitments-content').innerHTML = '<div class="empty-state">No active commitments</div>';
     return;
@@ -270,11 +320,19 @@ async function loadCommitments() {
   for (const c of data.commitments) {
     const isOverdue = c.due_date && c.due_date < today;
     const isDueToday = c.due_date === today;
-    const dueBadge = isOverdue ? badge('overdue', 'red') :
-      isDueToday ? badge('today', 'orange') :
-      c.due_date ? badge(c.due_date, 'gray') : '';
-    const statusBadge = c.status === 'blocked' ? badge('blocked', 'yellow') :
-      c.status === 'waiting' ? badge('waiting', 'blue') : '';
+    const dueBadge = isOverdue
+      ? badge('overdue', 'red')
+      : isDueToday
+        ? badge('today', 'orange')
+        : c.due_date
+          ? badge(c.due_date, 'gray')
+          : '';
+    const statusBadge =
+      c.status === 'blocked'
+        ? badge('blocked', 'yellow')
+        : c.status === 'waiting'
+          ? badge('waiting', 'blue')
+          : '';
 
     html += `<div class="commitment-item">
       <div class="commitment-text">${escHtml(c.description)} ${getActionLink(c.description)}</div>
@@ -306,7 +364,10 @@ function parsePaymentsText(text) {
     // glyph, and it parses live payment output. Rewriting the semantics
     // without a fixture of real input risks silently dropping sections.
     // eslint-disable-next-line no-misleading-character-class
-    if (/^[\u26A0\uFE0F\u2705\u2753\u274C]/.test(trimmed) || /^(MANUAL|AUTO|UNKNOWN|OVERDUE)/i.test(trimmed.replace(/^[^\w]*/, ''))) {
+    if (
+      /^[\u26A0\uFE0F\u2705\u2753\u274C]/.test(trimmed) ||
+      /^(MANUAL|AUTO|UNKNOWN|OVERDUE)/i.test(trimmed.replace(/^[^\w]*/, ''))
+    ) {
       const sectionMatch = trimmed.match(/^[^\w]*(.*?):/);
       if (sectionMatch) {
         currentSection = { title: sectionMatch[1].trim(), items: [], type: 'unknown' };
@@ -321,7 +382,9 @@ function parsePaymentsText(text) {
 
     // Payment item: starts with bullet (• or -)
     // eslint-disable-next-line no-misleading-character-class -- see above.
-    const itemMatch = trimmed.match(/^[\u26A0\uFE0F\s]*[\u2022-]\s*(.+?)(?:\s+\u2014\s+(.+?))?(?:\s*\(([^)]+)\))?$/);
+    const itemMatch = trimmed.match(
+      /^[\u26A0\uFE0F\s]*[\u2022-]\s*(.+?)(?:\s+\u2014\s+(.+?))?(?:\s*\(([^)]+)\))?$/,
+    );
     if (itemMatch && currentSection) {
       currentSection.items.push({
         name: itemMatch[1].trim(),
@@ -390,20 +453,29 @@ function renderPaymentSections(sections, _cssClass) {
   let html = '';
   for (const section of sections) {
     if (section.items.length === 0) continue;
-    const typeClass = section.type === 'manual' ? 'overdue' :
-      section.type === 'autopay' ? 'autopay' :
-      section.type === 'overdue' ? 'overdue' :
-      'unknown';
-    const titleColor = section.type === 'manual' ? 'var(--red)' :
-      section.type === 'autopay' ? 'var(--green)' :
-      section.type === 'overdue' ? 'var(--red)' :
-      'var(--yellow)';
+    const typeClass =
+      section.type === 'manual'
+        ? 'overdue'
+        : section.type === 'autopay'
+          ? 'autopay'
+          : section.type === 'overdue'
+            ? 'overdue'
+            : 'unknown';
+    const titleColor =
+      section.type === 'manual'
+        ? 'var(--red)'
+        : section.type === 'autopay'
+          ? 'var(--green)'
+          : section.type === 'overdue'
+            ? 'var(--red)'
+            : 'var(--yellow)';
 
     html += `<div class="payment-section ${typeClass}">
       <div class="payment-section-title" style="color:${titleColor}">${escHtml(section.title)}</div>`;
 
     for (const item of section.items) {
-      const dueColor = item.daysOverdue && item.daysOverdue.includes('-') ? 'var(--red)' : 'var(--text-dim)';
+      const dueColor =
+        item.daysOverdue && item.daysOverdue.includes('-') ? 'var(--red)' : 'var(--text-dim)';
       html += `<div class="payment-item">
         <div class="payment-name">
           <strong>${escHtml(item.name)}</strong>
@@ -421,7 +493,11 @@ function renderPaymentSections(sections, _cssClass) {
 
 async function loadFinance() {
   const data = await fetchJson('/api/finance');
-  if (data._error) { el('finance-content').innerHTML = `<div class="error-state">Error: ${escHtml(data._error)}</div>`; return; }
+  if (data._error) {
+    el('finance-content').innerHTML =
+      `<div class="error-state">Error: ${escHtml(data._error)}</div>`;
+    return;
+  }
 
   let html = '';
 
@@ -430,9 +506,10 @@ async function loadFinance() {
     html += renderPaymentItems(data.overdue, 'Overdue', 'var(--red)', 'overdue');
   } else if (data.overdue && typeof data.overdue === 'string') {
     const sections = parsePaymentsText(data.overdue);
-    html += sections.length > 0
-      ? renderPaymentSections(sections, 'overdue')
-      : `<div class="payment-section overdue"><div class="payment-section-title" style="color:var(--red)">Overdue</div><div style="font-size:0.85rem;white-space:pre-wrap">${escHtml(data.overdue)}</div></div>`;
+    html +=
+      sections.length > 0
+        ? renderPaymentSections(sections, 'overdue')
+        : `<div class="payment-section overdue"><div class="payment-section-title" style="color:var(--red)">Overdue</div><div style="font-size:0.85rem;white-space:pre-wrap">${escHtml(data.overdue)}</div></div>`;
   }
 
   // Upcoming payments — may be JSON array or legacy text
@@ -440,14 +517,15 @@ async function loadFinance() {
     html += renderPaymentItems(data.upcoming, 'Upcoming (14 days)', 'var(--accent)', 'upcoming');
   } else if (data.upcoming && typeof data.upcoming === 'string') {
     const sections = parsePaymentsText(data.upcoming);
-    html += sections.length > 0
-      ? renderPaymentSections(sections, 'upcoming')
-      : `<div class="payment-section upcoming"><div class="payment-section-title" style="color:var(--accent)">Upcoming</div><div style="font-size:0.85rem;white-space:pre-wrap">${escHtml(data.upcoming)}</div></div>`;
+    html +=
+      sections.length > 0
+        ? renderPaymentSections(sections, 'upcoming')
+        : `<div class="payment-section upcoming"><div class="payment-section-title" style="color:var(--accent)">Upcoming</div><div style="font-size:0.85rem;white-space:pre-wrap">${escHtml(data.upcoming)}</div></div>`;
   }
 
   // Subscriptions — fields: name, vendor, amount, currency, frequency, status, next_due, notes
-  const active = (data.subscriptions || []).filter(s => s.status !== 'cancelled');
-  const cancelled = (data.subscriptions || []).filter(s => s.status === 'cancelled');
+  const active = (data.subscriptions || []).filter((s) => s.status !== 'cancelled');
+  const cancelled = (data.subscriptions || []).filter((s) => s.status === 'cancelled');
 
   if (active.length > 0) {
     html += `<h3>Subscriptions</h3>
@@ -480,7 +558,11 @@ async function loadFinance() {
 
 async function loadMemory() {
   const data = await fetchJson('/api/memory');
-  if (data._error) { el('memory-content').innerHTML = `<div class="error-state">Error: ${escHtml(data._error)}</div>`; return; }
+  if (data._error) {
+    el('memory-content').innerHTML =
+      `<div class="error-state">Error: ${escHtml(data._error)}</div>`;
+    return;
+  }
   if (!data.logs || data.logs.length === 0) {
     el('memory-content').innerHTML = '<div class="empty-state">No recent memory logs</div>';
     return;
@@ -521,13 +603,18 @@ function toggleMemory(headerEl) {
 
 async function loadProjects() {
   const data = await fetchJson('/api/projects');
-  if (data._error) { el('projects-content').innerHTML = `<div class="error-state">Error: ${escHtml(data._error)}</div>`; return; }
+  if (data._error) {
+    el('projects-content').innerHTML =
+      `<div class="error-state">Error: ${escHtml(data._error)}</div>`;
+    return;
+  }
   if (!data.projects || data.projects.length === 0) {
     el('projects-content').innerHTML = '<div class="empty-state">No projects</div>';
     return;
   }
 
-  let html = '<table><thead><tr><th>Repo</th><th>Status</th><th>Workflow</th><th>Branch</th><th>Updated</th><th></th></tr></thead><tbody>';
+  let html =
+    '<table><thead><tr><th>Repo</th><th>Status</th><th>Workflow</th><th>Branch</th><th>Updated</th><th></th></tr></thead><tbody>';
 
   for (const p of data.projects) {
     if (p.error) {
@@ -540,10 +627,16 @@ async function loadProjects() {
     }
     const run = p.runs[0];
     const conclusion = run.conclusion || run.status;
-    const color = conclusion === 'success' ? 'green' :
-      conclusion === 'failure' ? 'red' :
-      conclusion === 'in_progress' || conclusion === 'queued' ? 'blue' :
-      conclusion === 'cancelled' ? 'gray' : 'yellow';
+    const color =
+      conclusion === 'success'
+        ? 'green'
+        : conclusion === 'failure'
+          ? 'red'
+          : conclusion === 'in_progress' || conclusion === 'queued'
+            ? 'blue'
+            : conclusion === 'cancelled'
+              ? 'gray'
+              : 'yellow';
     html += `<tr>
       <td><strong><a href="https://github.com/g-but/${escHtml(p.repo)}" target="_blank" class="email-link">${escHtml(p.repo)}</a></strong></td>
       <td>${badge(conclusion, color)}</td>
@@ -562,7 +655,10 @@ async function loadProjects() {
 
 async function loadEmail() {
   const data = await fetchJson('/api/email');
-  if (data._error) { el('email-content').innerHTML = `<div class="error-state">Error: ${escHtml(data._error)}</div>`; return; }
+  if (data._error) {
+    el('email-content').innerHTML = `<div class="error-state">Error: ${escHtml(data._error)}</div>`;
+    return;
+  }
 
   // Handle raw text fallback from gog
   if (data.raw && (!data.emails || data.emails.length === 0)) {
@@ -594,7 +690,9 @@ function normalizeEmail(e) {
   // Format 3: { sender, subject, receivedAt }
   // Format 4: { headers: { From, Subject, Date } }
   // Format 5: { payload: { headers: [...] } } (Gmail API format)
-  let from = '', subject = '', date = '';
+  let from = '',
+    subject = '',
+    date = '';
 
   if (e.headers && typeof e.headers === 'object' && !Array.isArray(e.headers)) {
     from = e.headers.From || e.headers.from || '';
@@ -631,7 +729,7 @@ function normalizeEmail(e) {
 
 function getHeader(headers, name) {
   if (!Array.isArray(headers)) return '';
-  const h = headers.find(h => h.name && h.name.toLowerCase() === name.toLowerCase());
+  const h = headers.find((h) => h.name && h.name.toLowerCase() === name.toLowerCase());
   return h ? h.value || '' : '';
 }
 
@@ -655,7 +753,9 @@ function renderEmails(emails, rawEmails) {
     const e = emails[i];
     const raw = rawEmails[i] || {};
     const threadId = raw.id || raw.threadId || '';
-    const gmailUrl = threadId ? `https://mail.google.com/mail/u/0/#inbox/${threadId}` : 'https://mail.google.com';
+    const gmailUrl = threadId
+      ? `https://mail.google.com/mail/u/0/#inbox/${threadId}`
+      : 'https://mail.google.com';
     html += `<div class="email-item">
       ${e.from ? `<div class="email-from">${escHtml(e.from)}</div>` : ''}
       <div class="email-subject"><a href="${gmailUrl}" target="_blank" class="email-link">${escHtml(e.subject)}</a></div>
