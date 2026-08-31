@@ -12,6 +12,9 @@
     "moduleResolution": "bundler",
     "module": "preserve",
     "skipLibCheck": true,
+    // TS 6 turns strictness on by default; this checkJs gate was written
+    // non-strict on TS 5 — keep that contract explicit rather than implicit.
+    "strict": false,
     "types": ["node"]
   },
   "include": ["server.js", "lib/**/*.js", "public/**/*.js", "scripts/**/*.mjs"],
