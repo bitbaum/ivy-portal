@@ -7,8 +7,8 @@
 //
 // Recommended preset only. The aim is to catch real mistakes, not to impose a
 // style on an existing codebase.
-import js from '@eslint/js'
-import globals from 'globals'
+import js from '@eslint/js';
+import globals from 'globals';
 
 export default [
   { ignores: ['node_modules/**', 'data/**', '*.db'] },
@@ -45,4 +45,4 @@ export default [
       globals: { ...globals.browser },
     },
   },
-]
+];

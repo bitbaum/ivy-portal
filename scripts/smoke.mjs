@@ -46,6 +46,9 @@ function poll() {
     else finish(1, `✗ smoke: unexpected status ${res.statusCode} on /`);
   });
   req.on('error', () => setTimeout(poll, POLL_MS));
-  req.on('timeout', () => { req.destroy(); setTimeout(poll, POLL_MS); });
+  req.on('timeout', () => {
+    req.destroy();
+    setTimeout(poll, POLL_MS);
+  });
 }
 setTimeout(poll, POLL_MS);
