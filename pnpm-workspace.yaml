@@ -1,0 +1,12 @@
+# pnpm 11 blocks dependency postinstall scripts by default; the entries below
+# are the deliberate decisions for this repo:
+# - better-sqlite3 compiles a native module the server relies on — allow.
+# - bufferutil / utf-8-validate are optional native accelerators for ws
+#   (pulled in by telegram) — allow so websockets get the fast path.
+# - core-js / es5-ext postinstalls only print messages — keep blocked.
+allowBuilds:
+  better-sqlite3: true
+  bufferutil: true
+  utf-8-validate: true
+  core-js: false
+  es5-ext: false
