@@ -2,7 +2,7 @@
 
 _Single dashboard for everything Ivy knows and manages._
 
-**Last updated:** 2026-03-31
+**Last updated:** 2026-09-04
 
 ## Architecture
 
@@ -27,8 +27,9 @@ ivy-portal/
 
 ## Data Source: `~/.openclaw/knowledge.sqlite` (SSOT)
 
-All data endpoints read from sqlite or shell out to existing tools.
-No JSON files, no duplicate data stores.
+All data endpoints read from sqlite, read existing OpenClaw files
+(`cron/jobs.json`, `memory/*.md`), or shell out to existing tools.
+No duplicate data stores of its own.
 
 ## API Endpoints (10)
 

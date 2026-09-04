@@ -29,7 +29,7 @@ A localhost-only web dashboard for George's personal infrastructure. This is the
 
 ### 5. GitHub CI
 - Run `gh run list --repo g-but/REPO --limit 1 --json status,conclusion,name` for each repo
-- Repos: orangecat, botsmann, revampit, aoz-housing, revamp-info, swiss-longevity-hub
+- Repos: orangecat, botsmann, revampit, datacat, revamp-info, swiss-longevity-hub
 
 ### 6. Cron Jobs
 - `~/.openclaw/cron/jobs.json` — all scheduled jobs with last run status
@@ -107,6 +107,6 @@ Build the full single-page dashboard with all 7 sections. Don't overcomplicate i
 ## Important
 - Do NOT modify any existing files outside this project directory
 - Do NOT install system packages
-- Use `npm init` and minimal dependencies (express, better-sqlite3)
+- Package manager is pnpm; keep dependencies minimal (express, better-sqlite3, telegram, input)
 - The dashboard must work on localhost:18790
 - Test that it starts and serves the page before declaring done

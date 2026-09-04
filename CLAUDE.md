@@ -37,8 +37,8 @@ Personal localhost dashboard for George's AI assistant infrastructure (OpenClaw)
 ## What Needs Improvement
 - Email section needs proper parsing (gog --json output format varies)
 - Calendar section needs better event display
-- Add Tailscale URL display (accessible remotely via https://g-latitudee7470.tailf6c86e.ts.net)
-- Consider adding a simple systemd service file for auto-start
+- Tailscale URL display: ✓ Fixed — header links to https://g-latitudee7470.tailf6c86e.ts.net:18790
+- Systemd service: ✓ Fixed — `ivy-portal.service` in repo root (`systemctl --user`)
 - Action links should appear on ALL items that need attention, not just some
 - Financial section: ✓ Fixed — overdue/upcoming render as structured cards from JSON; subscriptions table uses correct field names
 - Memory section: ✓ Fixed — endpoint and UI rendering both implemented
@@ -60,8 +60,8 @@ curl http://localhost:18790/api/memory
 ```
 
 ## Don't
-- Don't add npm dependencies beyond express and better-sqlite3
+- Don't add runtime dependencies beyond express, better-sqlite3, telegram, and input (pnpm is the package manager)
 - Don't modify files outside ~/dev/ivy-portal/
 - Don't add authentication (localhost only)
 - Don't create a build step or bundler
-- Don't use TypeScript
+- Don't convert to TypeScript — source stays plain JS; types are checked via `checkJs` (`pnpm run typecheck`)
