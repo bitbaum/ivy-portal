@@ -25,7 +25,7 @@
     "telegram": "^2.26.22"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^26.4.0",
     "eslint": "^10.9.1",
     "globals": "^17.11.0",
