@@ -29,10 +29,10 @@ _Making Ivy omnimnesic: all-seeing, all-remembering, proactive._
 **How:** Local 70B model running continuously, observing signals.
 **Status:** BLOCKED — needs hardware upgrade (4090 GPU).
 
-### 4. Dashboard UI (future)
+### 4. Dashboard UI
 **Purpose:** George can see memory, documentation, system status, financials.
 **How:** Local web app served on Tailscale.
-**Status:** PLANNED.
+**Status:** ✅ LIVE — this repo, port 18790 (see `SPEC.md`).
 
 ## Current Cron Schedule
 
