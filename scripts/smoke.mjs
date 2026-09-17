@@ -14,6 +14,12 @@ const POLL_MS = 300;
 const server = spawn(process.execPath, ['server.js'], {
   cwd: ROOT,
   stdio: ['ignore', 'inherit', 'inherit'],
+  // The server refuses to boot without an account for the calendar and mail
+  // panels, which is the point — but this test asks "does the process come up
+  // and serve", not "is this machine configured". A stand-in keeps CI (and a
+  // fresh clone) green without putting a real address back in the repo; a real
+  // GOG_ACCOUNT in the environment still wins.
+  env: { ...process.env, GOG_ACCOUNT: process.env.GOG_ACCOUNT ?? 'smoke@example.invalid' },
 });
 
 let done = false;

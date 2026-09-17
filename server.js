@@ -20,6 +20,20 @@ if (existsSync(envFile)) {
   }
 }
 
+// The Google account the `gog` CLI reads mail and calendar for. It was written
+// into both shell commands as one person's address, which made the portal a
+// dashboard for exactly one inbox and leaked that address into a repo. Fail
+// here rather than shelling out with no account and rendering two empty panels.
+const GOG_ACCOUNT = process.env.GOG_ACCOUNT;
+if (!GOG_ACCOUNT) {
+  console.error(
+    'GOG_ACCOUNT is not set. Put the Google account the calendar and mail panels ' +
+      'should read (e.g. GOG_ACCOUNT=you@example.com) in ~/.openclaw/.env or the ' +
+      'service environment.',
+  );
+  process.exit(1);
+}
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Helpers ---
@@ -92,7 +106,7 @@ app.get('/api/calendar', async (_req, res) => {
   const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
 
   const result = await runShell(
-    `gog calendar list primary --from ${today} --to ${nextWeek} --json -a butaeff@gmail.com`,
+    `gog calendar list primary --from ${today} --to ${nextWeek} --json -a ${GOG_ACCOUNT}`,
     { timeout: 20000 },
   );
 
@@ -186,10 +200,9 @@ app.get('/api/projects', async (_req, res) => {
 // --- API: Email ---
 
 app.get('/api/email', async (_req, res) => {
-  const result = await runShell(
-    'gog mail search "is:unread" --max 20 --json -a butaeff@gmail.com',
-    { timeout: 20000 },
-  );
+  const result = await runShell(`gog mail search "is:unread" --max 20 --json -a ${GOG_ACCOUNT}`, {
+    timeout: 20000,
+  });
 
   if (!result.ok) return res.json({ emails: [], error: result.error });
 

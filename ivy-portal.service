@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/g/dev/ivy-portal
+WorkingDirectory=%h/dev/ivy-portal
 ExecStart=/home/g/.nvm/versions/node/v22.22.0/bin/node server.js
 Restart=on-failure
 RestartSec=5
