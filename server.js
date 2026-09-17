@@ -182,7 +182,7 @@ app.get('/api/projects', async (_req, res) => {
   const results = await Promise.all(
     repos.map(async (repo) => {
       const result = await runShell(
-        `gh run list --repo g-but/${repo} --limit 1 --json status,conclusion,name,headBranch,updatedAt`,
+        `gh run list --repo bitbaum/${repo} --limit 1 --json status,conclusion,name,headBranch,updatedAt`,
         { timeout: 15000 },
       );
       if (!result.ok) return { repo, error: result.error };

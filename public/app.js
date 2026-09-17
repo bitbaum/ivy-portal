@@ -46,16 +46,16 @@ const ACTION_LINKS = {
   'Chase Ink': { url: 'https://chase.com/personal/credit-cards', label: 'Chase' },
   'Amex Gold': { url: 'https://americanexpress.com/login', label: 'Amex' },
   'Amazon Amex': { url: 'https://americanexpress.com/login', label: 'Amex' },
-  orangecat: { url: 'https://github.com/g-but/orangecat/actions', label: 'Actions' },
-  botsmann: { url: 'https://github.com/g-but/botsmann/actions', label: 'Actions' },
-  revampit: { url: 'https://github.com/g-but/revampit/actions', label: 'Actions' },
+  orangecat: { url: 'https://github.com/bitbaum/orangecat/actions', label: 'Actions' },
+  botsmann: { url: 'https://github.com/bitbaum/botsmann/actions', label: 'Actions' },
+  revampit: { url: 'https://github.com/bitbaum/revampit/actions', label: 'Actions' },
   'aoz-begleitung': {
     url: 'https://github.com/bitbaum/aoz-begleitung/actions',
     label: 'Actions',
   },
-  'revamp-info': { url: 'https://github.com/g-but/revamp-info/actions', label: 'Actions' },
+  'revamp-info': { url: 'https://github.com/bitbaum/revamp-info/actions', label: 'Actions' },
   'swiss-longevity-hub': {
-    url: 'https://github.com/g-but/swiss-longevity-hub/actions',
+    url: 'https://github.com/bitbaum/swiss-longevity-hub/actions',
     label: 'Actions',
   },
   'Return AOZ keys': {
@@ -641,7 +641,7 @@ async function loadProjects() {
               ? 'gray'
               : 'yellow';
     html += `<tr>
-      <td><strong><a href="https://github.com/g-but/${escHtml(p.repo)}" target="_blank" class="email-link">${escHtml(p.repo)}</a></strong></td>
+      <td><strong><a href="https://github.com/bitbaum/${escHtml(p.repo)}" target="_blank" class="email-link">${escHtml(p.repo)}</a></strong></td>
       <td>${badge(conclusion, color)}</td>
       <td>${escHtml(run.name || '\u2014')}</td>
       <td style="font-family:var(--mono);font-size:0.8rem">${escHtml(run.headBranch || '\u2014')}</td>

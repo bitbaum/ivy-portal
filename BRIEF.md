@@ -28,7 +28,7 @@ A localhost-only web dashboard for George's personal infrastructure. This is the
 - Run `gog mail search "is:unread" --max 20 --json` for unread
 
 ### 5. GitHub CI
-- Run `gh run list --repo g-but/REPO --limit 1 --json status,conclusion,name` for each repo
+- Run `gh run list --repo bitbaum/REPO --limit 1 --json status,conclusion,name` for each repo
 - Repos: orangecat, botsmann, revampit, datacat, revamp-info, swiss-longevity-hub
 
 ### 6. Cron Jobs
