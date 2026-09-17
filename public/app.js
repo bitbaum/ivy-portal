@@ -49,7 +49,10 @@ const ACTION_LINKS = {
   orangecat: { url: 'https://github.com/g-but/orangecat/actions', label: 'Actions' },
   botsmann: { url: 'https://github.com/g-but/botsmann/actions', label: 'Actions' },
   revampit: { url: 'https://github.com/g-but/revampit/actions', label: 'Actions' },
-  'aoz-housing': { url: 'https://github.com/g-but/aoz-housing/actions', label: 'Actions' },
+  'aoz-begleitung': {
+    url: 'https://github.com/bitbaum/aoz-begleitung/actions',
+    label: 'Actions',
+  },
   'revamp-info': { url: 'https://github.com/g-but/revamp-info/actions', label: 'Actions' },
   'swiss-longevity-hub': {
     url: 'https://github.com/g-but/swiss-longevity-hub/actions',
