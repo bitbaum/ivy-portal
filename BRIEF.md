@@ -29,7 +29,7 @@ A localhost-only web dashboard for George's personal infrastructure. This is the
 
 ### 5. GitHub CI
 - Run `gh run list --repo bitbaum/REPO --limit 1 --json status,conclusion,name` for each repo
-- Repos: orangecat, botsmann, revampit, datacat, revamp-info, swiss-longevity-hub
+- Repos: orangecat, botsmann, evig, datacat, hirnli
 
 ### 6. Cron Jobs
 - `~/.openclaw/cron/jobs.json` — all scheduled jobs with last run status
