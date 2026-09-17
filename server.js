@@ -170,14 +170,7 @@ app.get('/api/finance', async (_req, res) => {
 // --- API: Projects (CI) ---
 
 app.get('/api/projects', async (_req, res) => {
-  const repos = [
-    'orangecat',
-    'botsmann',
-    'revampit',
-    'datacat',
-    'revamp-info',
-    'swiss-longevity-hub',
-  ];
+  const repos = ['orangecat', 'botsmann', 'evig', 'datacat', 'hirnli'];
 
   const results = await Promise.all(
     repos.map(async (repo) => {

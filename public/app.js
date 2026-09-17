@@ -48,16 +48,12 @@ const ACTION_LINKS = {
   'Amazon Amex': { url: 'https://americanexpress.com/login', label: 'Amex' },
   orangecat: { url: 'https://github.com/bitbaum/orangecat/actions', label: 'Actions' },
   botsmann: { url: 'https://github.com/bitbaum/botsmann/actions', label: 'Actions' },
-  revampit: { url: 'https://github.com/bitbaum/revampit/actions', label: 'Actions' },
+  evig: { url: 'https://github.com/bitbaum/evig/actions', label: 'Actions' },
   'aoz-begleitung': {
     url: 'https://github.com/bitbaum/aoz-begleitung/actions',
     label: 'Actions',
   },
-  'revamp-info': { url: 'https://github.com/bitbaum/revamp-info/actions', label: 'Actions' },
-  'swiss-longevity-hub': {
-    url: 'https://github.com/bitbaum/swiss-longevity-hub/actions',
-    label: 'Actions',
-  },
+  hirnli: { url: 'https://github.com/bitbaum/hirnli/actions', label: 'Actions' },
   'Return AOZ keys': {
     url: 'https://maps.google.com/?q=Witikonerstrasse+440+Zurich',
     label: 'Map',
