@@ -520,8 +520,8 @@ packages:
   inquirer@0.12.0:
     resolution: {integrity: sha512-bOetEz5+/WpgaW4D1NYOk1aD+JCqRjqu/FwRFgnIfiP7FC/zinsrfyO1vlS3nyH/R7S0IH3BIHBu4DBIDSqiGQ==}
 
-  ip-address@10.2.0:
-    resolution: {integrity: sha512-/+S6j4E9AHvW9SWMSEY9Xfy66O5PWvVEJ08O0y5JGyEKQpojb0K0GKpz/v5HJ/G0vi3D2sjGK78119oXZeE0qA==}
+  ip-address@10.7.2:
+    resolution: {integrity: sha512-7H/2gFSIitxc0hG3nOI1glS8QLo/EHBFFLk8vEUjXY/xu0AdL8jZ9U1IzO2PUm0d2D/ofQcAifb0g6OBkt8U7w==}
     engines: {node: '>= 12'}
 
   ipaddr.js@1.9.1:
@@ -1439,7 +1439,7 @@ snapshots:
       strip-ansi: 3.0.1
       through: 2.3.8
 
-  ip-address@10.2.0: {}
+  ip-address@10.7.2: {}
 
   ipaddr.js@1.9.1: {}
 
@@ -1692,7 +1692,7 @@ snapshots:
 
   socks@2.8.9:
     dependencies:
-      ip-address: 10.2.0
+      ip-address: 10.7.2
       smart-buffer: 4.2.0
 
   statuses@2.0.2: {}
